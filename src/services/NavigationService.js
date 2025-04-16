@@ -156,7 +156,13 @@ export const reset = (routes, index = 0) => {
  */
 export const navigateToAddCard = (cardTypes) => {
   NavigationDebugger.debugLog('Specialized navigation to AddCard screen', { cardTypes });
-  return navigate('AddCard', { cardTypes });
+  return navigate('Tabs', {
+    screen: 'CardsTab',
+    params: {
+      screen: 'AddCard',
+      params: { cardTypes },
+    },
+  });
 };
 
 /**
