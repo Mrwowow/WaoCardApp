@@ -30,6 +30,7 @@ import CardListItem from '../components/cards/CardListItem';
 import CardDetailsModal from '../components/cards/CardDetailsModal';
 import EmptyCardState from '../components/cards/EmptyCardState';
 import CardTypeFilter from '../components/cards/CardTypeFilter';
+import { saveCards } from '../utils/storageUtils';
 import { generateDummyCards } from '../utils/cardUtils';
 
 const { width, height } = Dimensions.get('window');
@@ -46,13 +47,15 @@ const CardsScreen = ({ navigation, route }) => {
       };
       
       handleAddCard(cardToAdd);
-      
-      // Clear the params
-      navigation.setParams({ newCard: null });
     }
   }, [route.params?.newCard]);
   
-  // State for cards and UI
+  useEffect(() => {
+    // Clear the params after handling
+    navigation.setParams({ newCard: null });
+  }, []);
+
+    // State for cards and UI
   const [cards, setCards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCardType, setSelectedCardType] = useState('all');
@@ -138,16 +141,6 @@ const CardsScreen = ({ navigation, route }) => {
       Alert.alert('Error', 'Failed to load your cards. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Save cards to storage
-  const saveCards = async (updatedCards) => {
-    try {
-      await AsyncStorage.setItem('waocard_cards', JSON.stringify(updatedCards));
-    } catch (error) {
-      console.error('Error saving cards:', error);
-      Alert.alert('Error', 'Failed to save your cards. Please try again.');
     }
   };
 
@@ -357,5 +350,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+// Update for your NavigationService.js
+
+import { NavigationContainerRef } from '@react-navigation/native';
+
+let navigator;
+
+const setTopLevelNavigator = (navigatorRef) => {
+  navigator = navigatorRef;
+};
 
 export default CardsScreen;
