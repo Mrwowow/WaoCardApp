@@ -22,7 +22,7 @@ import { colors, fonts } from '../styles/theme';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// CardsNavigator - Handles all card-related screens
+// CardsNavigator - Now only contains the main Cards screen
 const CardsNavigator = () => {
   return (
     <Stack.Navigator 
@@ -31,8 +31,7 @@ const CardsNavigator = () => {
         cardStyle: { backgroundColor: '#000' },
       }}
     >
-      <Stack.Screen name="Cards" component={CardsScreen} />
-      <Stack.Screen name="AddCard" component={AddCardScreen} />
+      <Stack.Screen name="CardsList" component={CardsScreen} />
     </Stack.Navigator>
   );
 };
@@ -182,6 +181,7 @@ const TabNavigator = ({ initialLocation, offlineMode }) => {
 };
 
 // Main Navigator that combines Tab Navigator and Map Navigator
+// Now AddCardScreen is at the root level for easier access
 const MainNavigator = ({ initialLocation, offlineMode }) => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -194,7 +194,18 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
       >
         {() => <MapNavigator initialLocation={initialLocation} offlineMode={offlineMode} />}
       </Stack.Screen>
-      {/* Add ProfileScreen at this level */}
+      
+      {/* Move AddCard to root level for easier access */}
+      <Stack.Screen 
+        name="AddCard" 
+        component={AddCardScreen}
+        options={{ 
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
+      
+      {/* ProfileScreen at root level */}
       <Stack.Screen 
         name="ProfileScreen" 
         component={ProfileScreen} 
@@ -263,4 +274,3 @@ const styles = StyleSheet.create({
 });
 
 export default MainNavigator;
-     

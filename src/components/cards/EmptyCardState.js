@@ -1,21 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+
+// Import NavigationService for global navigation
+import NavigationService from '../../services/NavigationService';
 
 const { height } = Dimensions.get('window');
 
 const EmptyCardState = ({ cardType, onAddCard }) => {
   // Get navigation object directly using the hook
   const navigation = useNavigation();
+  
+  // Make sure we have a valid navigation object
+  useEffect(() => {
+    if (!navigation) {
+      console.warn('Navigation object not available in EmptyCardState');
+    }
+  }, [navigation]);
+
   // Get message based on selected card type
   const getMessage = () => {
     switch (cardType) {
@@ -55,6 +67,48 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
     }
   };
 
+  // Button press handler 
+  const handleAddCardPress = () => {
+    console.log("[EmptyCardState] Add card button pressed");
+    
+    // 1. First, try using the provided callback
+    if (onAddCard && typeof onAddCard === 'function') {
+      console.log("[EmptyCardState] Using provided onAddCard callback");
+      onAddCard();
+      return;
+    }
+    
+    // 2. If no callback, use NavigationService as a fallback
+    console.log("[EmptyCardState] Using NavigationService as fallback");
+    
+    // Get card types data
+    const cardTypeData = [
+      { id: 'payment', name: 'Payment', icon: 'card-outline' },
+      { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
+      { id: 'id', name: 'ID', icon: 'id-card-outline' },
+      { id: 'ticket', name: 'Tickets', icon: 'ticket-outline' },
+      { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
+      { id: 'business', name: 'Business', icon: 'briefcase-outline' },
+    ];
+    
+    try {
+      NavigationService.navigateToAddCard(cardTypeData);
+    } catch (error) {
+      console.error("[EmptyCardState] Navigation service error:", error);
+      
+      // 3. If NavigationService fails, try direct navigation as last resort
+      try {
+        navigation.navigate('AddCard', { cardTypes: cardTypeData });
+      } catch (navError) {
+        console.error("[EmptyCardState] All navigation attempts failed:", navError);
+        Alert.alert(
+          "Navigation Error",
+          "Could not navigate to Add Card screen. Please try again."
+        );
+      }
+    }
+  };
+
   return (
     <ScrollView 
       contentContainerStyle={styles.scrollContainer}
@@ -78,24 +132,7 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
         
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={() => {
-            if (onAddCard) {
-              // Use the provided onAddCard function if available
-              onAddCard();
-            } else if (navigation) {
-              // Navigate to AddCardScreen with appropriate params
-              navigation.navigate('AddCard', {
-                cardTypes: [
-                  { id: 'payment', name: 'Payment', icon: 'card-outline' },
-                  { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
-                  { id: 'id', name: 'ID', icon: 'id-card-outline' },
-                  { id: 'ticket', name: 'Tickets', icon: 'ticket-outline' },
-                  { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
-                  { id: 'business', name: 'Business', icon: 'briefcase-outline' },
-                ]
-              });
-            }
-          }}
+          onPress={handleAddCardPress}
         >
           <LinearGradient
             colors={['#FF9500', '#E08600']}
@@ -140,7 +177,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 60,
     marginBottom: 50,
-
   },
   iconContainer: {
     marginBottom: 20,

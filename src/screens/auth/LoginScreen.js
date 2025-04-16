@@ -202,7 +202,7 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
     }
   };
   
-  // Update your handleLogin function:
+  // Updated handleLogin function to fix navigation issues
   const handleLogin = async (user = username, pass = password, fromBiometric = false) => {
     setIsLoading(true);
     
@@ -214,6 +214,53 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
     }
     
     try {
+      // Special case for demo user to bypass API
+      if (user === 'demo' && pass === 'password') {
+        console.log('LoginScreen: Demo user detected, using mock authentication');
+        
+        // Create mock result
+        const mockToken = 'mock-token-' + Date.now();
+        const mockResult = {
+          api_status: 200,
+          access_token: mockToken,
+          user_id: '1'
+        };
+        
+        // Save credentials for biometric auth if this was a manual login
+        if (!fromBiometric) {
+          await AsyncStorage.setItem('waocard_credentials', JSON.stringify({
+            username: user,
+            password: pass
+          }));
+        }
+        
+        // Store token in AsyncStorage
+        await AsyncStorage.setItem('waocard_token', mockToken);
+        await AsyncStorage.setItem('waocard_user_id', '1');
+        
+        // Update auth context with username and password (special case for demo)
+        await signIn(user, pass);
+        
+        // Show success notification
+        showNotification('Demo login successful!', 'success');
+        
+        // Import NavigationService to handle navigation
+        const NavigationService = require('../../services/NavigationService').default;
+        
+        // Navigate to main screen
+        setTimeout(() => {
+          if (onAuthenticated) {
+            onAuthenticated();
+          } else {
+            NavigationService.reset([{ name: 'Main' }]);
+          }
+        }, 1000);
+        
+        setIsLoading(false);
+        return;
+      }
+      
+      // Regular authentication flow for non-demo users
       const myHeaders = new Headers();
       myHeaders.append("Cookie", "_us=1744552840; ad-con=%7B%26quot%3Bdate%26quot%3B%3A%26quot%3B2025-04-12%26quot%3B%2C%26quot%3Bads%26quot%3B%3A%5B%5D%7D; PHPSESSID=1pjujq451m8ol33eelm0is4ck9; mode=day");
       
@@ -234,57 +281,69 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
       const result = await response.json();
       
       if (result.api_status === 200) {
-        // Save credentials for biometric auth if this was a manual login
-        if (!fromBiometric) {
-          await AsyncStorage.setItem('waocard_credentials', JSON.stringify({
-            username: user,
-            password: pass
-          }));
-        }
-        
-        // Fetch user data
         try {
-          // Sign in with the token
+          // Save credentials for biometric auth if this was a manual login
+          if (!fromBiometric) {
+            await AsyncStorage.setItem('waocard_credentials', JSON.stringify({
+              username: user,
+              password: pass
+            }));
+          }
+          
+          // First, store the token in AsyncStorage
+          await AsyncStorage.setItem('waocard_token', result.access_token);
+          await AsyncStorage.setItem('waocard_user_id', result.user_id.toString());
+          
+          // Update auth context with token
           await signIn(result.access_token);
           
-          // Then fetch user data
+          // Fetch additional user data
           await fetchUserData(result.access_token, user);
           
           // Show success notification
           showNotification('Login successful!', 'success');
           
-          // Navigate to main app
-          setTimeout(() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Main' }],
-            });
-          }, 1000);
+          // Import NavigationService to handle navigation
+          const NavigationService = require('../../services/NavigationService').default;
           
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          showNotification('Login successful, but failed to fetch user data', 'info');
-          // Still navigate even if user data fetch fails
+          // Let the notification be visible for a moment before proceeding
           setTimeout(() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Main' }],
-            });
+            // Use the onAuthenticated callback if available (preferred)
+            if (onAuthenticated) {
+              onAuthenticated();
+            } else {
+              // Reset navigation state to Main stack
+              NavigationService.reset([{ name: 'Main' }]);
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('Authentication process error:', error);
+          showNotification('Login successful, but encountered an error with your profile', 'info');
+          
+          // Still proceed with navigation even if there was a data fetch error
+          const NavigationService = require('../../services/NavigationService').default;
+          
+          setTimeout(() => {
+            if (onAuthenticated) {
+              onAuthenticated();
+            } else {
+              // Reset navigation state to Main stack
+              NavigationService.reset([{ name: 'Main' }]);
+            }
           }, 1000);
         }
       } else {
-        // Show error notification
+        // Show error notification for API errors
         showNotification(result.errors?.error_text || 'Login failed', 'error');
       }
     } catch (error) {
-      setIsLoading(false);
+      // Show error notification for network errors
+      console.error('Network or connection error:', error);
       showNotification('Network error. Please check your connection.', 'error');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
-  
   
   return (
     <KeyboardAvoidingView

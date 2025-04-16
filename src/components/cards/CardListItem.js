@@ -146,6 +146,11 @@ const CardListItem = ({ card, onPress }) => {
                 <Text style={styles.pointsValue}>{card.points || '0'}</Text>
                 <Text style={styles.pointsLabel}>POINTS</Text>
               </View>
+              {card.number && (
+                <View style={styles.qrIndicator}>
+                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                </View>
+              )}
             </>
           )}
 
@@ -155,6 +160,11 @@ const CardListItem = ({ card, onPress }) => {
                 <Text style={styles.dateLabel}>DATE</Text>
                 <Text style={styles.dateValue}>{card.date || 'DD/MM/YYYY'}</Text>
               </View>
+              {card.number && (
+                <View style={styles.qrIndicator}>
+                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                </View>
+              )}
             </>
           )}
 
@@ -164,6 +174,11 @@ const CardListItem = ({ card, onPress }) => {
                 <Text style={styles.balanceLabel}>BALANCE</Text>
                 <Text style={styles.balanceValue}>{card.balance || '$0.00'}</Text>
               </View>
+              {card.number && (
+                <View style={styles.qrIndicator}>
+                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                </View>
+              )}
             </>
           )}
         </View>
@@ -322,6 +337,13 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  qrIndicator: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginLeft: 'auto',
   },
   shineEffect: {
     position: 'absolute',

@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import QRCode from 'react-native-qrcode-svg';
 
 import CardListItem from './CardListItem';
 
@@ -231,6 +232,21 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
             <ScrollView style={styles.detailsContainer}>
               <Text style={styles.detailsTitle}>Card Details</Text>
               
+              {/* QR Code for cards that need it */}
+              {(card.type === 'loyalty' || card.type === 'gift' || card.type === 'ticket') && card.number && (
+                <View style={styles.qrCodeContainer}>
+                  <QRCode
+                    value={card.number}
+                    size={150}
+                    color="#000000"
+                    backgroundColor="#FFFFFF"
+                  />
+                  <Text style={styles.qrCodeText}>
+                    Scan this code at {card.issuer || 'the merchant'}
+                  </Text>
+                </View>
+              )}
+              
               {/* Created Date */}
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Added On</Text>
@@ -375,6 +391,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFF',
     marginBottom: 15,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+  },
+  qrCodeText: {
+    marginTop: 10,
+    color: '#121212',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   detailRow: {
     flexDirection: 'row',

@@ -1,3 +1,5 @@
+// Update for your CardsScreen.js
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -19,6 +21,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Import the navigation service
+import NavigationService from '../services/NavigationService';
 
 import { colors, fonts } from '../styles/theme';
 import CardListItem from '../components/cards/CardListItem';
@@ -79,6 +84,9 @@ const CardsScreen = ({ navigation, route }) => {
 
   // Add button animation on press
   const animateAddButton = () => {
+    console.log("[CardsScreen] animateAddButton called");
+    
+    // Perform the animation
     Animated.sequence([
       Animated.timing(addButtonScale, {
         toValue: 0.9,
@@ -91,10 +99,21 @@ const CardsScreen = ({ navigation, route }) => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Navigate to the AddCardScreen
-      navigation.navigate('AddCard', {
-        cardTypes: cardTypes.filter(type => type.id !== 'all'),
-      });
+      console.log("[CardsScreen] Animation completed, attempting navigation");
+      
+      // Use NavigationService for global navigation
+      // This bypasses nested navigator issues
+      try {
+        const filteredCardTypes = cardTypes.filter(type => type.id !== 'all');
+        console.log("[CardsScreen] Using NavigationService to navigate to AddCard");
+        NavigationService.navigateToAddCard(filteredCardTypes);
+      } catch (error) {
+        console.error("[CardsScreen] Navigation error:", error);
+        Alert.alert(
+          "Navigation Error",
+          "Could not navigate to Add Card screen. Please try again."
+        );
+      }
     });
   };
 

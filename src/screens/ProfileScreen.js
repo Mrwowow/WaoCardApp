@@ -8,12 +8,15 @@ import {
   SafeAreaView,
   StatusBar,
   ImageBackground,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import useConfirmation from '../hooks/useConfirmation';
 import styles from '../styles/profileScreenStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NavigationService from '../services/NavigationService';
 
 const ProfileScreen = ({ navigation }) => {
   const { userData, signOut } = useAuth();
@@ -22,6 +25,30 @@ const ProfileScreen = ({ navigation }) => {
 
   // Format name with fallback
   const fullName = userData ? `${userData.first_name} ${userData.last_name}` : 'User';
+  
+  // Create animated value for badge pulse effect
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  
+  // Start pulse animation when component mounts
+  React.useEffect(() => {
+    // Only animate if user is verified
+    if (userData?.is_verified === 1) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1000,
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true
+          })
+        ])
+      ).start();
+    }
+  }, [userData?.is_verified]);
   
   // Updated logout handler using confirmation modal
   const handleLogout = async () => {
@@ -35,12 +62,43 @@ const ProfileScreen = ({ navigation }) => {
         icon: 'log-out-outline'
       });
       
-      // User confirmed logout
-      signOut();
+      // Show notification first
       notification.info('You have been signed out successfully');
       
+      console.log('Starting logout process');
+      
+      try {
+        // The most reliable approach - just let AuthContext handle everything
+        console.log('Calling signOut from AuthContext');
+        await signOut();
+        
+        // Let the auth context update propagate first
+        setTimeout(async () => {
+          // Simple approach - just navigate back
+          try {
+            console.log('Simple navigation - go back to landing page');
+            navigation.popToTop();
+            console.log('Navigation popToTop completed');
+          } catch (navError) {
+            console.log('Navigation back failed, trying reset:', navError);
+            
+            // Fallback to reset navigation
+            try {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Landing' }],
+              });
+            } catch (resetError) {
+              console.error('Navigation reset also failed:', resetError);
+            }
+          }
+        }, 300);
+      } catch (e) {
+        console.error('Error during logout process:', e);
+      }
     } catch (error) {
-      // User canceled logout
+      // User canceled logout or error occurred
+      console.log('Logout canceled or confirmation declined:', error);
     }
   };
   
@@ -64,12 +122,46 @@ const ProfileScreen = ({ navigation }) => {
       
       // Process account deletion
       notification.success('Your account has been scheduled for deletion');
-      setTimeout(() => {
-        signOut();
+      console.log('Account deletion confirmed by user');
+      
+      // Use setTimeout to allow the notification to be visible
+      setTimeout(async () => {
+        try {
+          console.log('Starting account deletion process');
+          
+          // The most reliable approach - just let AuthContext handle everything
+          console.log('Calling signOut from AuthContext');
+          await signOut();
+          
+          // Let the auth context update propagate first
+          setTimeout(async () => {
+            // Simple approach - just navigate back
+            try {
+              console.log('Simple navigation - go back to landing page');
+              navigation.popToTop();
+              console.log('Navigation popToTop completed');
+            } catch (navError) {
+              console.log('Navigation back failed, trying reset:', navError);
+              
+              // Fallback to reset navigation
+              try {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Landing' }],
+                });
+              } catch (resetError) {
+                console.error('Navigation reset also failed:', resetError);
+              }
+            }
+          }, 300);
+        } catch (e) {
+          console.error('Error during account deletion process:', e);
+        }
       }, 2000);
       
     } catch (error) {
       // User canceled account deletion
+      console.log('Account deletion canceled by user:', error);
     }
   };
   
@@ -167,11 +259,20 @@ const ProfileScreen = ({ navigation }) => {
                     )}
                   </View>
                   
-                  {/* Verification badge as a separate element outside the avatar */}
+                  {/* Enhanced verification badge with animation */}
                   {userData?.is_verified === 1 && (
-                    <View style={styles.verificationBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color="#FF9500" />
-                    </View>
+                    <Animated.View 
+                      style={[
+                        styles.verificationBadge,
+                        {
+                          transform: [
+                            { scale: pulseAnim } // Pulse animation
+                          ]
+                        }
+                      ]}
+                    >
+                      <Ionicons name="checkmark-circle" size={18} color="#34C759" />
+                    </Animated.View>
                   )}
                 </View>
                 
