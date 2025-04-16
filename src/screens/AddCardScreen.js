@@ -36,7 +36,7 @@ const AddCardScreen = ({ navigation, route }) => {
   const notification = useNotification();
   const { confirm, confirmDelete, ConfirmationComponent } = useConfirmation();
   
-  // Get parameters passed in navigation
+ // Get parameters passed in navigation
   const { onAddCard, cardTypes } = route.params || {};
   
   // Form state
@@ -106,63 +106,61 @@ const AddCardScreen = ({ navigation, route }) => {
   };
   
   // Handle navigation between steps
-  // Update the handleNextStep function in your AddCardScreen.js
+    const handleNextStep = () => {
+        if (currentStep === 1) {
+            // First step logic remains the same
+            if (!cardType) {
+                notification.error('Please select a card type', {
+                    actionLabel: 'Select',
+                    actionOnPress: () => {
+                        // Focus on card type section
+                    }
+                });
+                return;
+            }
 
-const handleNextStep = () => {
-    if (currentStep === 1) {
-      // First step logic remains the same
-      if (!cardType) {
-        notification.error('Please select a card type', {
-          actionLabel: 'Select',
-          actionOnPress: () => {
-            // Focus on card type section
-          }
-        });
-        return;
-      }
-      
-      setCurrentStep(2);
-      notification.info(`Adding new ${getCardTypeName(cardType)}`, {
-        title: 'Step 2 of 2',
-        animPattern: 'FADE_IN'
-      });
-    } else if (currentStep === 2) {
-      // Form validation remains the same
-      if (!cardName) {
-        notification.error('Please enter a card name', {
-          actionLabel: 'OK'
-        });
-        return;
-      }
-      
-      // Validate card-specific required fields
-      if (cardType === 'payment') {
-        if (!cardNumber || !cardHolderName) {
-          notification.error('Please fill in all required fields', {
-            title: 'Missing Information',
-            actionLabel: 'Review'
-          });
-          return;
-        }
-      }
-      
-      // Collect card data based on type
-      const newCard = {
-        type: cardType,
-        name: cardName,
-        issuer: cardIssuer,
-        logo: cardLogo,
-      };
-      
-      // Add card-specific fields (this stays the same)
-      switch (cardType) {
-        case 'payment':
-          newCard.number = cardNumber;
-          newCard.holderName = cardHolderName;
-          newCard.expiry = cardExpiry;
-          newCard.cvv = cardCVV;
-          newCard.network = cardNetwork;
-          break;
+            setCurrentStep(2);
+            notification.info(`Adding new ${getCardTypeName(cardType)}`, {
+                title: 'Step 2 of 2',
+                animPattern: 'FADE_IN'
+            });
+        } else if (currentStep === 2) {
+            // Form validation remains the same
+            if (!cardName) {
+                notification.error('Please enter a card name', {
+                    actionLabel: 'OK'
+                });
+                return;
+            }
+
+            // Validate card-specific required fields
+            if (cardType === 'payment') {
+                if (!cardNumber || !cardHolderName) {
+                    notification.error('Please fill in all required fields', {
+                        title: 'Missing Information',
+                        actionLabel: 'Review'
+                    });
+                    return;
+                }
+            }
+
+            // Collect card data based on type
+            const newCard = {
+                type: cardType,
+                name: cardName,
+                issuer: cardIssuer,
+                logo: cardLogo,
+            };
+
+            // Add card-specific fields (this stays the same)
+            switch (cardType) {
+                case 'payment':
+                    newCard.number = cardNumber;
+                    newCard.holderName = cardHolderName;
+                    newCard.expiry = cardExpiry;
+                    newCard.cvv = cardCVV;
+                    newCard.network = cardNetwork;
+                    break;
         case 'loyalty':
           newCard.number = cardNumber;
           newCard.points = loyaltyPoints;
@@ -177,29 +175,23 @@ const handleNextStep = () => {
           newCard.location = eventLocation;
           break;
         default:
-          newCard.number = cardNumber;
-      }
-      
-      // Use NavigationService to navigate back to the CardsTab with proper nesting
-      // This replaces the problematic navigation.navigate('CardsScreen', { newCard }); line
-      
-      // First, go back to the TabNavigator
-      navigation.navigate('Tabs', {
-        screen: 'CardsTab',
-        params: {
-          screen: 'CardsList',
-          params: { newCard }
-        }
-      });
-      
-      // Show success notification
-      notification.success(`${cardName} added successfully!`, {
-        title: 'Card Added',
-        actionLabel: 'View All',
-        actionOnPress: () => {
-          // Already navigated to Cards
-        }
-      });
+                    newCard.number = cardNumber;
+            }
+
+            // Use NavigationService to navigate back to the CardsTab with proper nesting
+            // This replaces the problematic navigation.navigate('CardsScreen', { newCard }); line
+            // First, go back to the TabNavigator
+            navigation.navigate('Tabs', {
+                screen: 'CardsTab',
+                params: {
+                    screen: 'CardsList',
+                    params: { newCard }
+                }
+            });
+            // Show success notification
+            notification.success(`${cardName} added successfully!`, {
+                title: 'Card Added'
+            });
     }
   };
   
@@ -802,16 +794,7 @@ const handleNextStep = () => {
           {currentStep === 1 ? renderStepOne() : renderStepTwo()}
         </KeyboardAvoidingView>
       </ImageBackground>
-      
-      {/* Camera Scanner Modal */}
-      {isCameraVisible && (
-        <Modal
-          visible={isCameraVisible}
-          transparent={false}
-          onRequestClose={() => setIsCameraVisible(false)}
-        >
-          {renderCameraView()}
-        </Modal>
+      {/* Camera Scanner Modal */} {isCameraVisible && (<Modal visible={isCameraVisible} transparent={false} onRequestClose={() => setIsCameraVisible(false)}> {renderCameraView()}</Modal>
       )}
       
       {/* Include the ConfirmationComponent */}
