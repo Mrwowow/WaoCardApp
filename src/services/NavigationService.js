@@ -1,6 +1,6 @@
-// src/services/NavigationService.js
 
-import { createRef } from 'react';
+
+import { createRef,  } from 'react';
 import { CommonActions, StackActions } from '@react-navigation/native';
 import NavigationDebugger from '../utils/NavigationDebugger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Navigation service to provide global navigation capabilities
  * outside of React components.
+ * 
  */
 
 // Reference to navigation object
@@ -31,6 +32,13 @@ export const navigate = (name, params) => {
     _queuedNavigationActions.push({ action: 'navigate', name, params });
     return false;
   }
+};
+
+/**
+ * Sets the top-level navigation refrence to be used in the app
+ */
+export const setTopLevelNavigator = (navigatorRef) => {
+    navigationRef.current = navigatorRef;
 };
 
 /**
@@ -156,13 +164,7 @@ export const reset = (routes, index = 0) => {
  */
 export const navigateToAddCard = (cardTypes) => {
   NavigationDebugger.debugLog('Specialized navigation to AddCard screen', { cardTypes });
-  return navigate('Tabs', {
-    screen: 'CardsTab',
-    params: {
-      screen: 'AddCard',
-      params: { cardTypes },
-    },
-  });
+  return navigate('AddCard', { cardTypes });
 };
 
 /**

@@ -67,5 +67,22 @@ export const STORAGE_KEYS = {
   MAP_DATA: 'cachedMapData',
   USER_PREFERENCES: 'userMapPreferences',
   LAST_LOCATION: 'lastKnownLocation',
-  FAVORITE_MERCHANTS: 'favoriteMerchants'
+  FAVORITE_MERCHANTS: 'favoriteMerchants',
+  CARDS: 'waocard_cards'
+};
+
+/**
+ * Save cards to AsyncStorage
+ * @param {Array} cards - Array of card objects to save
+ * @returns {Promise<boolean>} - Success status
+ */
+export const saveCards = async (cards) => {
+  try {
+    console.log('Saving cards to storage:', cards.length);
+    await AsyncStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(cards));
+    return true;
+  } catch (error) {
+    console.error('Error saving cards:', error);
+    return false;
+  }
 };
