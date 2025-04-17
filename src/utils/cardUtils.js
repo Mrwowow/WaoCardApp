@@ -1,6 +1,8 @@
 /**
  * Utility functions for card management
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from './storageUtils';
 
 /**
  * Generate dummy cards for first-time users
@@ -228,3 +230,38 @@ export const generateDummyCards = () => {
     
     return true;
   };
+  
+/**
+ * Load cards from AsyncStorage
+ * @returns {Promise<Array>} Array of card objects or empty array if none exist
+ */
+export const loadCardsFromStorage = async () => {
+  try {
+    console.log('[cardUtils] Attempting to load cards from storage');
+    const cardsJSON = await AsyncStorage.getItem(STORAGE_KEYS.CARDS);
+    
+    if (!cardsJSON) {
+      console.log('[cardUtils] No cards found in storage');
+      return [];
+    }
+    
+    try {
+      const parsedCards = JSON.parse(cardsJSON);
+      
+      // Verify it's actually an array
+      if (Array.isArray(parsedCards)) {
+        console.log('[cardUtils] Successfully loaded', parsedCards.length, 'cards from storage');
+        return parsedCards;
+      } else {
+        console.error('[cardUtils] Stored cards data is not an array', typeof parsedCards);
+        return [];
+      }
+    } catch (parseError) {
+      console.error('[cardUtils] Error parsing cards JSON:', parseError);
+      return [];
+    }
+  } catch (error) {
+    console.error('[cardUtils] Error accessing AsyncStorage:', error);
+    return [];
+  }
+};

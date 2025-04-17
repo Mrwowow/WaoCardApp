@@ -178,14 +178,19 @@ const AddCardScreen = ({ navigation, route }) => {
                     newCard.number = cardNumber;
             }
 
-            // Use NavigationService to navigate back to the CardsTab with proper nesting
-            // This replaces the problematic navigation.navigate('CardsScreen', { newCard }); line
-            // First, go back to the TabNavigator
+            // Go back to the Cards Tab using proper nested navigation
+            console.log('[AddCardScreen] Navigating back with new card:', cardName);
+            
+            // Add a timestamp to ensure React treats it as a new object
+            // This helps ensure the route.params change is detected
             navigation.navigate('Tabs', {
                 screen: 'CardsTab',
                 params: {
                     screen: 'CardsList',
-                    params: { newCard }
+                    params: { 
+                        newCard,
+                        timestamp: Date.now() // Add timestamp to force param refresh
+                    }
                 }
             });
             // Show success notification
@@ -794,7 +799,16 @@ const AddCardScreen = ({ navigation, route }) => {
           {currentStep === 1 ? renderStepOne() : renderStepTwo()}
         </KeyboardAvoidingView>
       </ImageBackground>
-      {/* Camera Scanner Modal */} {isCameraVisible && (<Modal visible={isCameraVisible} transparent={false} onRequestClose={() => setIsCameraVisible(false)}> {renderCameraView()}</Modal>
+      
+      {/* Camera Scanner Modal */}
+      {isCameraVisible && (
+        <Modal 
+          visible={isCameraVisible} 
+          transparent={false} 
+          onRequestClose={() => setIsCameraVisible(false)}
+        >
+          {renderCameraView()}
+        </Modal>
       )}
       
       {/* Include the ConfirmationComponent */}
