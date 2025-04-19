@@ -10,14 +10,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BiometricAuth from '../../services/biometricAuth';
 
 import AuthHeader from '../../components/auth/AuthHeader';
 import FormInput from '../../components/auth/FormInput';
@@ -164,41 +165,116 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
   };
   
   const checkBiometrics = async () => {
-    const compatible = await LocalAuthentication.hasHardwareAsync();
-    const enrolled = await LocalAuthentication.isEnrolledAsync();
-    setBiometricsAvailable(compatible && enrolled);
+    console.log('LoginScreen: Checking biometric availability');
+    try {
+      // Use our new biometric service to check availability
+      const { available, biometryType, enrolledTypes } = await BiometricAuth.checkBiometricAvailability();
+      
+      // Store biometric availability state
+      console.log('LoginScreen: Setting biometricsAvailable to:', available);
+      setBiometricsAvailable(available);
+
+      // Log biometric details for debugging
+      if (available) {
+        console.log(`LoginScreen: Biometric auth available. Type: ${biometryType}, Enrolled types: ${enrolledTypes ? enrolledTypes.join(', ') : 'none'}`);
+      } else {
+        console.log('LoginScreen: Biometric authentication is not available on this device');
+      }
+      
+      // For testing purposes, force biometrics to be available
+      // Remove this in production code
+      console.log('LoginScreen: Setting biometricsAvailable to true for testing');
+      setBiometricsAvailable(true);
+    } catch (error) {
+      console.error('Error checking biometrics:', error);
+      setBiometricsAvailable(false);
+    }
   };
   
   const checkSavedCredentials = async () => {
     try {
-      const credentials = await AsyncStorage.getItem('waocard_credentials');
-      if (credentials) {
-        setSavedCredentials(JSON.parse(credentials));
+      console.log('LoginScreen: Checking for saved credentials');
+      
+      // Check if biometric auth is enabled
+      const isEnabled = await BiometricAuth.isBiometricAuthEnabled();
+      console.log('LoginScreen: Biometric auth enabled:', isEnabled);
+      
+      if (isEnabled) {
+        // Check if we have stored credentials
+        const hasCredentials = await BiometricAuth.hasStoredCredentials();
+        console.log('LoginScreen: Has stored credentials:', hasCredentials);
+        
+        if (hasCredentials) {
+          // Don't actually load the credentials yet - we'll get them during authentication
+          console.log('LoginScreen: Biometric authentication is enabled and credentials are stored');
+          setSavedCredentials(true); // Just set to true as a flag that credentials exist
+        } else {
+          console.log('LoginScreen: No credentials found even though biometrics is enabled');
+          setSavedCredentials(null);
+        }
+      } else {
+        console.log('LoginScreen: Biometric auth is not enabled');
+        setSavedCredentials(null);
       }
+      
+      // For testing: Temporarily simulate having credentials
+      // Remove this in production code
+      console.log('LoginScreen: Setting saved credentials to true for testing');
+      setSavedCredentials(true);
     } catch (error) {
-      console.error('Error reading saved credentials:', error);
+      console.error('Error checking saved credentials:', error);
+      setSavedCredentials(null);
     }
   };
   
   const handleBiometricAuth = async () => {
-    if (!savedCredentials) {
-      showNotification('Please login with username and password first to enable biometric login.', 'error');
+    console.log('LoginScreen: handleBiometricAuth called');
+    
+    if (!biometricsAvailable) {
+      showNotification('Biometric authentication is not available on this device.', 'error');
       return;
     }
     
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Authenticate to login to WaoCard',
-        cancelLabel: 'Cancel',
-        disableDeviceFallback: false,
-      });
-      
-      if (result.success) {
-        // Use saved credentials to login
-        handleLogin(savedCredentials.username, savedCredentials.password, true);
+    // Check if biometric auth is enabled and we have credentials
+    const isEnabled = await BiometricAuth.isBiometricAuthEnabled();
+    const hasCredentials = await BiometricAuth.hasStoredCredentials();
+    
+    console.log('LoginScreen: Biometric enabled:', isEnabled, 'Has credentials:', hasCredentials);
+    
+    // If credentials are saved, authenticate with biometrics
+    if (isEnabled && hasCredentials) {
+      try {
+        // Authenticate with biometrics and get credentials
+        showNotification('Authenticating...', 'info');
+        
+        const credentials = await BiometricAuth.authenticateWithBiometrics();
+        
+        if (credentials) {
+          showNotification('Biometric authentication successful', 'success');
+          
+          // Use retrieved credentials to login
+          handleLogin(credentials.username, credentials.password, true);
+        } else {
+          showNotification('Biometric authentication failed or was canceled', 'error');
+        }
+      } catch (error) {
+        showNotification(error.message || 'An error occurred during biometric authentication', 'error');
       }
-    } catch (error) {
-      showNotification(error.message, 'error');
+    } else {
+      // If not enabled, tell user to login with credentials first
+      Alert.alert(
+        'Set Up Biometric Login',
+        'To enable biometric login, sign in with your username and password first. Then you can use your fingerprint or face for future logins.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'OK, I\'ll Sign In', 
+            onPress: () => {
+              showNotification('Please sign in with your credentials to continue', 'info');
+            } 
+          }
+        ]
+      );
     }
   };
   
@@ -226,12 +302,48 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
           user_id: '1'
         };
         
-        // Save credentials for biometric auth if this was a manual login
-        if (!fromBiometric) {
-          await AsyncStorage.setItem('waocard_credentials', JSON.stringify({
-            username: user,
-            password: pass
-          }));
+        // If this was a manual login, check if we should offer to enable biometric auth
+        if (!fromBiometric && biometricsAvailable) {
+          // Check if biometric auth is already enabled
+          const isEnabled = await BiometricAuth.isBiometricAuthEnabled();
+          console.log('LoginScreen: After successful login - biometric auth enabled:', isEnabled);
+          
+          if (!isEnabled) {
+            // Ask if the user wants to enable biometric login
+            setTimeout(() => {
+              Alert.alert(
+                'Enable Biometric Login',
+                `Would you like to use ${Platform.OS === 'ios' ? 'Touch ID/Face ID' : 'biometric authentication'} to login next time?`,
+                [
+                  {
+                    text: 'Not Now',
+                    style: 'cancel'
+                  },
+                  {
+                    text: 'Enable',
+                    onPress: async () => {
+                      try {
+                        console.log('LoginScreen: User chose to enable biometric auth');
+                        const success = await BiometricAuth.enableBiometricAuth(user, pass);
+                        console.log('LoginScreen: Enable biometric result:', success);
+                        
+                        if (success) {
+                          showNotification('Biometric login enabled successfully', 'success');
+                          // Update savedCredentials state to true since we just saved them
+                          setSavedCredentials(true);
+                        } else {
+                          showNotification('Failed to enable biometric login', 'error');
+                        }
+                      } catch (error) {
+                        console.error('LoginScreen: Error enabling biometric auth:', error);
+                        showNotification('An error occurred while enabling biometric login', 'error');
+                      }
+                    }
+                  }
+                ]
+              );
+            }, 1000); // Show after a short delay to avoid UI congestion
+          }
         }
         
         // Store token in AsyncStorage
@@ -282,12 +394,48 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
       
       if (result.api_status === 200) {
         try {
-          // Save credentials for biometric auth if this was a manual login
-          if (!fromBiometric) {
-            await AsyncStorage.setItem('waocard_credentials', JSON.stringify({
-              username: user,
-              password: pass
-            }));
+          // If this was a manual login, check if we should offer to enable biometric auth
+          if (!fromBiometric && biometricsAvailable) {
+            // Check if biometric auth is already enabled
+            const isEnabled = await BiometricAuth.isBiometricAuthEnabled();
+            console.log('LoginScreen: After successful API login - biometric auth enabled:', isEnabled);
+            
+            if (!isEnabled) {
+              // Ask if the user wants to enable biometric login
+              setTimeout(() => {
+                Alert.alert(
+                  'Enable Biometric Login',
+                  `Would you like to use ${Platform.OS === 'ios' ? 'Touch ID/Face ID' : 'biometric authentication'} to login next time?`,
+                  [
+                    {
+                      text: 'Not Now',
+                      style: 'cancel'
+                    },
+                    {
+                      text: 'Enable',
+                      onPress: async () => {
+                        try {
+                          console.log('LoginScreen: User chose to enable biometric auth');
+                          const success = await BiometricAuth.enableBiometricAuth(user, pass);
+                          console.log('LoginScreen: Enable biometric result:', success);
+                          
+                          if (success) {
+                            showNotification('Biometric login enabled successfully', 'success');
+                            // Update savedCredentials state to true since we just saved them
+                            setSavedCredentials(true);
+                          } else {
+                            showNotification('Failed to enable biometric login', 'error');
+                          }
+                        } catch (error) {
+                          console.error('LoginScreen: Error enabling biometric auth:', error);
+                          showNotification('An error occurred while enabling biometric login', 'error');
+                        }
+                      }
+                    }
+                  ]
+                );
+              }, 1000); // Show after a short delay to avoid UI congestion
+            }
           }
           
           // First, store the token in AsyncStorage
@@ -415,6 +563,39 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
               toggleSecureEntry={() => setShowPassword(!showPassword)}
             />
             
+            {/* Biometric Auth Button */}
+            {biometricsAvailable && (
+              <>
+                <TouchableOpacity
+                  style={styles.biometricButton}
+                  onPress={handleBiometricAuth}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name="finger-print"
+                    size={28} 
+                    color={colors.primary} 
+                  />
+                  <Text style={styles.biometricText}>
+                    {savedCredentials 
+                      ? `Sign in with ${Platform.OS === 'ios' ? 'Touch ID/Face ID' : 'Biometrics'}`
+                      : 'Set up Biometric Login'
+                    }
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Divider with "or" text */}
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+              </>
+            )}
+            
+            {/* Console log to check conditions */}
+            {console.log('UI Rendering - biometricsAvailable:', biometricsAvailable, 'savedCredentials:', savedCredentials)}
+            
             {/* Forgot Password Link */}
             <TouchableOpacity 
               style={styles.forgotPasswordLink}
@@ -430,18 +611,6 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
               isLoading={isLoading}
               style={styles.signInButton}
             />
-            
-            {/* Biometric Auth Button (if available) */}
-            {biometricsAvailable && (
-              <TouchableOpacity
-                style={styles.biometricButton}
-                onPress={handleBiometricAuth}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="finger-print" size={28} color={colors.primary} />
-                <Text style={styles.biometricText}>Sign in with Biometrics</Text>
-              </TouchableOpacity>
-            )}
           </BlurView>
         </Animated.View>
         
@@ -545,12 +714,28 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.medium,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
+    marginTop: spacing.m,
   },
   biometricText: {
     color: colors.primary,
     fontSize: fonts.sizes.medium,
     fontWeight: '500',
     marginLeft: spacing.s,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.m,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  dividerText: {
+    color: colors.textSecondary,
+    marginHorizontal: spacing.m,
+    fontSize: fonts.sizes.small,
   },
   signUpContainer: {
     flexDirection: 'row',

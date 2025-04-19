@@ -1,5 +1,5 @@
 // src/screens/auth/LandingScreen.js
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -7,19 +7,51 @@ import {
   TouchableOpacity, 
   Animated, 
   ImageBackground,
-  SafeAreaView 
+  SafeAreaView,
+  FlatList,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Svg, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { Svg, Path, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { StatusBar } from 'expo-status-bar';
 import LottieView from 'lottie-react-native';
+import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import WaoCardLogo from '../../components/auth/WaoCardLogo';
 import GradientButton from '../../components/auth/GradientButton';
 import { colors, fonts, screenDimensions, spacing } from '../../styles/theme';
 
 const { width, height } = screenDimensions;
 
+// Feature slider data
+const featureData = [
+  {
+    id: '1',
+    title: 'One Digital ID',
+    description: 'Replace all your ID cards with a single, secure digital identity that works everywhere you go.',
+    icon: 'shield-account',
+    iconType: 'MaterialCommunity'
+  },
+  {
+    id: '2',
+    title: 'Easy Payments',
+    description: 'Pay anyone, anywhere with a simple tap. No more juggling multiple payment apps or cards.',
+    icon: 'credit-card',
+    iconType: 'FontAwesome5'
+  },
+  {
+    id: '3',
+    title: 'Universal Access',
+    description: 'Open doors, log in to services, and access your accounts - all with just one card.',
+    icon: 'key',
+    iconType: 'FontAwesome5'
+  }
+];
+
 const LandingScreen = ({ navigation }) => {
+  // State for slider
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const sliderRef = useRef(null);
+  
   // Animation references
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(50)).current;
@@ -46,7 +78,69 @@ const LandingScreen = ({ navigation }) => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+    
+    // Auto-scroll timer
+    const timer = setInterval(() => {
+      if (currentIndex < featureData.length - 1) {
+        sliderRef.current?.scrollToIndex({
+          index: currentIndex + 1,
+          animated: true
+        });
+      } else {
+        sliderRef.current?.scrollToIndex({
+          index: 0,
+          animated: true
+        });
+      }
+    }, 5000);
+    
+    return () => clearInterval(timer);
+  }, [currentIndex]);
+
+  // Feature slide item render
+  const renderFeatureItem = ({ item }) => {
+    return (
+      <View style={styles.featureSlide}>
+        <View style={styles.featureIconContainer}>
+          {item.iconType === 'FontAwesome5' && (
+            <FontAwesome5 name={item.icon} size={40} color={colors.primary} />
+          )}
+          {item.iconType === 'MaterialCommunity' && (
+            <MaterialCommunityIcons name={item.icon} size={40} color={colors.primary} />
+          )}
+          {item.iconType === 'Material' && (
+            <MaterialIcons name={item.icon} size={40} color={colors.primary} />
+          )}
+        </View>
+        <Text style={styles.featureTitle}>{item.title}</Text>
+        <Text style={styles.featureDescription}>{item.description}</Text>
+      </View>
+    );
+  };
+
+  // Indicator dots for slider
+  const renderDotIndicator = () => {
+    return (
+      <View style={styles.paginationDots}>
+        {featureData.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              { backgroundColor: index === currentIndex ? colors.primary : colors.textSecondary }
+            ]}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  // Handle scroll events
+  const handleScroll = (event) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / width);
+    setCurrentIndex(index);
+  };
 
   return (
     <View style={styles.container}>
@@ -99,15 +193,32 @@ const LandingScreen = ({ navigation }) => {
             </Text>
           </View>
           
-          {/* Animation */}
-          <View style={styles.animationContainer}>
-            <LottieView
-              source={require('../../../assets/animations/digital-wallet.json')}
-              autoPlay
-              loop
-              style={styles.animation}
+          {/* Feature Slider */}
+          <Animated.View 
+            style={[
+              styles.sliderContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: translateYAnim }]
+              }
+            ]}
+          >
+            <FlatList
+              ref={sliderRef}
+              data={featureData}
+              renderItem={renderFeatureItem}
+              keyExtractor={item => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={handleScroll}
+              onMomentumScrollEnd={handleScroll}
+              decelerationRate="fast"
+              snapToAlignment="center"
+              snapToInterval={width}
             />
-          </View>
+            {renderDotIndicator()}
+          </Animated.View>
           
           {/* Marketing content */}
           <Animated.View 
@@ -119,9 +230,9 @@ const LandingScreen = ({ navigation }) => {
               }
             ]}
           >
-            <Text style={styles.tagline}>Financial Freedom for Africa</Text>
+            <Text style={styles.tagline}>One Card for Everything</Text>
             <Text style={styles.description}>
-              The leading digital wallet platform enabling financial inclusion across Africa
+              The all-in-one card that simplifies your life and empowers your future
             </Text>
           </Animated.View>
           
@@ -195,7 +306,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 20,
   },
   appTitle: {
     fontSize: fonts.sizes.title,
@@ -207,25 +318,68 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '300',
   },
-  animationContainer: {
+  // Slider styles
+  sliderContainer: {
+    marginTop: 10,
+    marginBottom: 5,
+    height: height * 0.32,
+  },
+  featureSlide: {
+    width: width - 60, // Account for padding
+    height: height * 0.26,
     alignItems: 'center',
     justifyContent: 'center',
-    height: height * 0.3,
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
   },
-  animation: {
-    width: width * 0.8,
-    height: width * 0.8,
+  featureIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 149, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: fonts.sizes.xl,
+    fontWeight: 'bold',
+    color: colors.white,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  featureDescription: {
+    fontSize: fonts.sizes.small,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  paginationDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    height: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
   marketingContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   tagline: {
     fontSize: fonts.sizes.xxl,
     fontWeight: 'bold',
     color: colors.white,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   description: {
     fontSize: fonts.sizes.medium,
@@ -235,7 +389,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    marginBottom: 40,
+    marginBottom: 30,
   },
   buttonPrimary: {
     width: '100%',

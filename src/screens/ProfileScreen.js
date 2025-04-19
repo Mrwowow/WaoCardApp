@@ -9,6 +9,8 @@ import {
   StatusBar,
   ImageBackground,
   Animated,
+  Switch,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -17,17 +19,113 @@ import useConfirmation from '../hooks/useConfirmation';
 import styles from '../styles/profileScreenStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NavigationService from '../services/NavigationService';
+import BiometricAuth from '../services/biometricAuth';
 
 const ProfileScreen = ({ navigation }) => {
   const { userData, signOut } = useAuth();
   const notification = useNotification();
   const { confirm, confirmDelete, ConfirmationComponent } = useConfirmation();
 
+  // State for biometric authentication
+  const [biometricAvailable, setBiometricAvailable] = React.useState(false);
+  const [biometricEnabled, setBiometricEnabled] = React.useState(false);
+  const [biometricType, setBiometricType] = React.useState('biometrics');
+
   // Format name with fallback
   const fullName = userData ? `${userData.first_name} ${userData.last_name}` : 'User';
   
   // Create animated value for badge pulse effect
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  
+  // Check biometric availability and status
+  React.useEffect(() => {
+    const checkBiometrics = async () => {
+      try {
+        // Check if biometrics are available
+        const { available, biometryType, enrolledTypes } = await BiometricAuth.checkBiometricAvailability();
+        setBiometricAvailable(available);
+        
+        if (available) {
+          // Set the proper name for the biometric type
+          if (Platform.OS === 'ios') {
+            if (enrolledTypes.includes('facial')) {
+              setBiometricType('Face ID');
+            } else {
+              setBiometricType('Touch ID');
+            }
+          } else {
+            if (enrolledTypes.includes('facial')) {
+              setBiometricType('Face Recognition');
+            } else {
+              setBiometricType('Fingerprint');
+            }
+          }
+          
+          // Check if biometric authentication is enabled
+          const enabled = await BiometricAuth.isBiometricAuthEnabled();
+          setBiometricEnabled(enabled);
+        }
+      } catch (error) {
+        console.error('Error checking biometrics:', error);
+      }
+    };
+    
+    checkBiometrics();
+  }, []);
+  
+  // Toggle biometric authentication
+  const toggleBiometricAuth = async (value) => {
+    try {
+      if (value) {
+        // Enable biometric authentication
+        if (!userData || !userData.username) {
+          notification.error('User data not available. Please sign in again.');
+          return;
+        }
+        
+        // We need to get credentials from the user
+        await confirm({
+          title: `Enable ${biometricType} Login`,
+          message: `To enable ${biometricType} login, you'll need to authenticate and provide your password again for security.`,
+          confirmText: 'Continue',
+          type: 'default',
+          icon: 'finger-print'
+        });
+        
+        // Here we would ideally have a password input modal
+        // But for now, let's just show a notification that it's not fully implemented
+        notification.info(`${biometricType} login will be enabled in a future update`, {
+          title: 'Coming Soon',
+          duration: 3000
+        });
+        
+        return;
+      } else {
+        // Disable biometric authentication
+        await confirm({
+          title: `Disable ${biometricType} Login`,
+          message: `Are you sure you want to disable ${biometricType} login? You'll need to enter your password manually on your next login.`,
+          confirmText: 'Disable',
+          type: 'warning',
+          icon: 'finger-print'
+        });
+        
+        const success = await BiometricAuth.disableBiometricAuth();
+        
+        if (success) {
+          setBiometricEnabled(false);
+          notification.success(`${biometricType} login has been disabled`, {
+            duration: 2000
+          });
+        } else {
+          notification.error(`Failed to disable ${biometricType} login`);
+        }
+      }
+    } catch (error) {
+      // User canceled or error occurred
+      console.log('Biometric toggle canceled or error:', error);
+    }
+  };
   
   // Start pulse animation when component mounts
   React.useEffect(() => {
@@ -432,6 +530,29 @@ const ProfileScreen = ({ navigation }) => {
               </View>
               <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" style={styles.settingArrow} />
             </TouchableOpacity>
+            
+            {/* Biometric Authentication Option - Only show if available on device */}
+            {biometricAvailable && (
+              <View style={styles.settingItem}>
+                <View style={styles.settingIconContainer}>
+                  <Ionicons name="finger-print" size={20} color="#FF9500" />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text style={styles.settingTitle}>{biometricType} Login</Text>
+                  <Text style={styles.settingDescription}>
+                    Sign in without typing your password
+                  </Text>
+                </View>
+                <Switch
+                  value={biometricEnabled}
+                  onValueChange={toggleBiometricAuth}
+                  trackColor={{ false: 'rgba(255, 255, 255, 0.1)', true: 'rgba(255, 149, 0, 0.3)' }}
+                  thumbColor={biometricEnabled ? '#FF9500' : 'rgba(255, 255, 255, 0.7)'}
+                  ios_backgroundColor="rgba(255, 255, 255, 0.1)"
+                  style={styles.settingSwitch}
+                />
+              </View>
+            )}
             
             <TouchableOpacity 
               style={styles.settingItem}

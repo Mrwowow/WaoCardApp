@@ -352,6 +352,9 @@ export default {
   settingArrow: {
     marginLeft: 10,
   },
+  settingSwitch: {
+    marginLeft: 10,
+  },
   
   // Logout Button
   logoutButton: {

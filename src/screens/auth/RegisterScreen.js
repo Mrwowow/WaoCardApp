@@ -23,10 +23,16 @@ import GradientButton from '../../components/auth/GradientButton';
 import { colors, fonts, spacing, borderRadius } from '../../styles/theme';
 import { register } from '../../services/auth';
 import { validateRegistrationData } from '../../utils/validations';
+import { useNotification } from '../../context/NotificationContext';
+import useConfirmation from '../../hooks/useConfirmation';
 
 const { width, height } = Dimensions.get('window');
 
 const RegisterScreen = ({ navigation }) => {
+  // Hooks for notification and confirmation
+  const notification = useNotification();
+  const { confirm, ConfirmationComponent } = useConfirmation();
+  
   // Form state
   const [formData, setFormData] = useState({
     username: '',
@@ -77,23 +83,27 @@ const RegisterScreen = ({ navigation }) => {
     const { first_name, last_name, email, phone_num } = formData;
     
     if (!first_name.trim()) {
-      Alert.alert('Error', 'Please enter your first name');
+      notification.error('Please enter your first name', { title: 'Validation Error' });
       return false;
     }
     
     if (!last_name.trim()) {
-      Alert.alert('Error', 'Please enter your last name');
+      notification.error('Please enter your last name', { title: 'Validation Error' });
       return false;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      notification.error('Please enter a valid email address', { title: 'Validation Error' });
       return false;
     }
     
-    if (!phone_num.trim() || phone_num.length < 10) {
-      Alert.alert('Error', 'Please enter a valid phone number');
+    // Phone number validation - either starts with + followed by digits, or just digits
+    const phoneRegex = /^(\+\d{1,3})?\d{10,15}$/;
+    if (!phone_num.trim() || !phoneRegex.test(phone_num)) {
+      notification.error('Please enter a valid phone number (include country code with + prefix)', 
+        { title: 'Validation Error' }
+      );
       return false;
     }
     
@@ -104,22 +114,22 @@ const RegisterScreen = ({ navigation }) => {
     const { username, password, confirm_password } = formData;
     
     if (!username.trim() || username.length < 4) {
-      Alert.alert('Error', 'Username must be at least 4 characters');
+      notification.error('Username must be at least 4 characters', { title: 'Validation Error' });
       return false;
     }
     
     if (!password.trim() || password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      notification.error('Password must be at least 6 characters', { title: 'Validation Error' });
       return false;
     }
     
     if (password !== confirm_password) {
-      Alert.alert('Error', 'Passwords do not match');
+      notification.error('Passwords do not match', { title: 'Validation Error' });
       return false;
     }
     
     if (!genderSelection) {
-      Alert.alert('Error', 'Please select your gender');
+      notification.error('Please select your gender', { title: 'Validation Error' });
       return false;
     }
     
@@ -131,6 +141,12 @@ const RegisterScreen = ({ navigation }) => {
   
   const handleNextStep = () => {
     if (validateStep1()) {
+      // Show success notification
+      notification.info('Step 1 completed', { 
+        title: 'Personal Information Verified',
+        duration: 2000
+      });
+      
       setCurrentStep(2);
       
       // Reset animation values and trigger new animation
@@ -178,28 +194,56 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
     
-    setIsLoading(true);
-    
     try {
-      const result = await register(formData);
+      // Show confirmation before proceeding
+      await confirm({
+        title: 'Create Account',
+        message: 'You are about to create a new WaoCard account. Continue?',
+        confirmText: 'Create Account',
+        type: 'default',
+        icon: 'person-add'
+      });
+      
+      // If confirmed, proceed with registration
+      setIsLoading(true);
+      
+      // Add server key to form data
+      const registrationData = {
+        ...formData,
+      };
+      
+      const result = await register(registrationData);
       
       setIsLoading(false);
       
-      // Show success message and navigate to login
-      Alert.alert(
-        'Registration Successful',
-        'Your account has been created successfully!',
-        [
-          {
-            text: 'Sign In Now',
-            onPress: () => navigation.replace('Login')
-          }
-        ]
-      );
+      // Show success notification
+      notification.success('Your account has been created successfully!', {
+        title: 'Welcome to WaoCard',
+        duration: 5000,
+        actionLabel: 'Sign In Now',
+        actionOnPress: () => navigation.replace('Login')
+      });
+      
+      // Navigate to login after a short delay
+      setTimeout(() => {
+        navigation.replace('Login');
+      }, 2000);
+      
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Registration Failed', error.message || 'An error occurred');
-      console.error(error);
+      
+      if (error === false) {
+        // User canceled the confirmation
+        return;
+      }
+      
+      // Show error notification
+      notification.error(error.message || 'An error occurred. Please try again.', {
+        title: 'Registration Failed',
+        duration: 4000
+      });
+      
+      console.error('Registration error:', error);
     }
   };
   
@@ -248,7 +292,7 @@ const RegisterScreen = ({ navigation }) => {
         {/* Phone Number Input */}
         <FormInput
           icon="call-outline"
-          placeholder="Phone Number"
+          placeholder="Phone Number (e.g. +1234567890)"
           value={formData.phone_num}
           onChangeText={(text) => handleInputChange('phone_num', text)}
           keyboardType="phone-pad"
@@ -424,6 +468,9 @@ const RegisterScreen = ({ navigation }) => {
           style={styles.decorGradient}
         />
       </View>
+      
+      {/* Render the confirmation component */}
+      <ConfirmationComponent />
     </KeyboardAvoidingView>
   );
 };
