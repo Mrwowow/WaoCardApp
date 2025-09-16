@@ -15,6 +15,7 @@ import {
   ImageBackground,
   Modal
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,6 +27,8 @@ import { Camera } from 'expo-camera';
 const { width, height } = Dimensions.get('window');
 
 const AddCardScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
+  
   // Get notification and confirmation hooks
   const notification = useNotification();
   const { confirm, confirmDelete, ConfirmationComponent } = useConfirmation();
@@ -1054,7 +1057,7 @@ const AddCardScreen = ({ navigation, route }) => {
         style={styles.backgroundImage}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity style={styles.backButton} onPress={handlePrevStep}>
             <Ionicons name="chevron-back" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -1105,7 +1108,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 10,
     paddingBottom: 15,
   },
   backButton: {
