@@ -37,6 +37,19 @@ export const generateDummyCards = () => {
         createdAt: now,
       },
       
+      // Store card example
+      {
+        id: 'dummy-store-1',
+        type: 'store',
+        name: 'SuperMart Rewards',
+        number: '6011123456789',
+        holderName: 'JOHN DOE',
+        balance: '$25.50',
+        issuer: 'SuperMart',
+        expiryDate: '03/26',
+        createdAt: now,
+      },
+      
       // Gift card example
       {
         id: 'dummy-gift-1',
@@ -48,13 +61,36 @@ export const generateDummyCards = () => {
         createdAt: now,
       },
       
-      // ID card example
+      // ID card example - University Student ID
       {
         id: 'dummy-id-1',
         type: 'id',
-        name: 'Gym Membership',
-        number: 'M-5431',
-        issuer: 'FitZone Gym',
+        name: 'Student ID',
+        number: 'S-2024-5431',
+        holderName: 'Jasmine Williams',
+        role: 'Student',
+        issuer: 'CSUB',
+        department: 'Computer Science',
+        mealPlan: 'METRO MEAL PLAN',
+        balance: '350.00',
+        level: 'Senior',
+        mealsRemaining: '56',
+        expiry: '05/2025',
+        createdAt: now,
+      },
+      
+      // ID card example - Employee ID
+      {
+        id: 'dummy-id-2',
+        type: 'id',
+        name: 'Employee Badge',
+        number: 'E-98765',
+        holderName: 'John Smith',
+        role: 'Senior Developer',
+        issuer: 'Tech Corp',
+        department: 'Engineering',
+        level: 'Level 3',
+        expiry: '12/2025',
         createdAt: now,
       },
       

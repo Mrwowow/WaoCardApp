@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the navigation service
@@ -27,6 +28,7 @@ import NavigationService from '../services/NavigationService';
 
 import { colors, fonts } from '../styles/theme';
 import CardListItem from '../components/cards/CardListItem';
+import CardStack from '../components/cards/CardStack';
 import CardDetailsModal from '../components/cards/CardDetailsModal';
 import EmptyCardState from '../components/cards/EmptyCardState';
 import CardTypeFilter from '../components/cards/CardTypeFilter';
@@ -37,6 +39,7 @@ const { width, height } = Dimensions.get('window');
 
 const CardsScreen = ({ navigation, route }) => {
   console.log('[CardsScreen] Initial render');
+  const insets = useSafeAreaInsets();
 
   // State for cards and UI
   const [cards, setCards] = useState([]);
@@ -45,6 +48,7 @@ const CardsScreen = ({ navigation, route }) => {
   const [selectedCardType, setSelectedCardType] = useState('all');
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardDetails, setShowCardDetails] = useState(false);
+  const [viewMode, setViewMode] = useState('stack'); // 'list' or 'stack'
   
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -136,7 +140,7 @@ const CardsScreen = ({ navigation, route }) => {
     loadCards();
   }, []);
   
-  // Check if we have a new card from AddCardScreen
+  // Check if we have a new or updated card from AddCardScreen
   useEffect(() => {
     const handleNewCard = async () => {
       if (route.params?.newCard) {
@@ -157,13 +161,50 @@ const CardsScreen = ({ navigation, route }) => {
         }
       }
     };
+
+    const handleUpdatedCard = async () => {
+      if (route.params?.updatedCard) {
+        console.log('[CardsScreen] Updated card received from params:', route.params.updatedCard);
+        
+        try {
+          // Get current cards from storage
+          const currentCards = await loadCardsFromStorage();
+          
+          // Find and replace the updated card
+          const updatedCards = currentCards.map(card => 
+            card.id === route.params.updatedCard.id 
+              ? route.params.updatedCard 
+              : card
+          );
+          
+          // Update state and storage
+          setCards(updatedCards);
+          await saveCards(updatedCards);
+          
+          console.log('[CardsScreen] Card updated successfully');
+        } catch (error) {
+          console.error('[CardsScreen] Error processing updated card:', error);
+        }
+      }
+    };
     
     handleNewCard();
-  }, [route.params?.newCard]);
+    handleUpdatedCard();
+
+    // Handle showing modal after update
+    if (route.params?.showModal && route.params?.updatedCard) {
+      // Wait for the card to be processed, then show the modal
+      setTimeout(() => {
+        const updatedCard = route.params.updatedCard;
+        setSelectedCard(updatedCard);
+        setShowCardDetails(true);
+      }, 500);
+    }
+  }, [route.params?.newCard, route.params?.updatedCard, route.params?.showModal]);
   
   useEffect(() => {
-    // Only clear params if newCard exists and after it's been processed
-    if (route.params?.newCard) {
+    // Clear params if newCard or updatedCard exists and after they've been processed
+    if (route.params?.newCard || route.params?.updatedCard || route.params?.showModal) {
       console.log('[CardsScreen] Scheduling to clear params after processing');
       
       // Use a longer timeout to ensure the card is fully processed
@@ -171,6 +212,8 @@ const CardsScreen = ({ navigation, route }) => {
         console.log('[CardsScreen] Clearing route params');
         navigation.setParams({ 
           newCard: null,
+          updatedCard: null,
+          showModal: null,
           timestamp: null
         });
       }, 1000); // Increased timeout to ensure card is processed
@@ -180,13 +223,14 @@ const CardsScreen = ({ navigation, route }) => {
         clearTimeout(timer);
       };
     }
-  }, [route.params?.newCard, route.params?.timestamp]);
+  }, [route.params?.newCard, route.params?.updatedCard, route.params?.showModal, route.params?.timestamp]);
 
   // Card type filters
   const cardTypes = [
     { id: 'all', name: 'All Cards', icon: 'albums-outline' },
     { id: 'payment', name: 'Payment', icon: 'card-outline' },
     { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
+    { id: 'store', name: 'Store Cards', icon: 'storefront-outline' },
     { id: 'id', name: 'ID', icon: 'id-card-outline' },
     { id: 'ticket', name: 'Tickets', icon: 'ticket-outline' },
     { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
@@ -331,72 +375,119 @@ const CardsScreen = ({ navigation, route }) => {
         {/* Header Content */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Cards</Text>
-          <Animated.View style={{ transform: [{ scale: addButtonScale }] }}>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={animateAddButton}
-              activeOpacity={0.8}
+          <View style={styles.headerActions}>
+            {/* View mode toggle */}
+            <TouchableOpacity
+              style={styles.viewToggle}
+              onPress={() => setViewMode(viewMode === 'stack' ? 'list' : 'stack')}
+              onLongPress={() => {
+                if (viewMode === 'stack') {
+                  // Cycle through card types in stack view
+                  const currentIndex = cardTypes.findIndex(type => type.id === selectedCardType);
+                  const nextIndex = (currentIndex + 1) % cardTypes.length;
+                  setSelectedCardType(cardTypes[nextIndex].id);
+                }
+              }}
             >
-              <LinearGradient
-                colors={['#FF9500', '#E08600']}
-                style={styles.addButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="add" size={28} color="#FFF" />
-              </LinearGradient>
+              <Ionicons
+                name={viewMode === 'stack' ? 'list-outline' : 'layers-outline'}
+                size={24}
+                color="#FFF"
+              />
             </TouchableOpacity>
-          </Animated.View>
+            
+            <Animated.View style={{ transform: [{ scale: addButtonScale }] }}>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={animateAddButton}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#FF9500', '#E08600']}
+                  style={styles.addButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="add" size={28} color="#FFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         </View>
 
-        {/* Card Type Filters */}
-        <CardTypeFilter
-          cardTypes={cardTypes}
-          selectedType={selectedCardType}
-          onSelectType={setSelectedCardType}
-        />
-
-        {/* Cards List */}
-        {(() => {
-          console.log('[CardsScreen] Render state:', { 
-            isLoading, 
-            cardsLength: cards.length, 
-            filteredCardsLength: filteredCards?.length || 0 
-          });
-          
-          if (isLoading) {
-            return (
-              <View style={styles.loadingContainer}>
-                <Ionicons name="card" size={40} color="#FF9500" />
-                <Text style={styles.loadingText}>Loading your cards...</Text>
-              </View>
-            );
-          } else if (!filteredCards || filteredCards.length === 0) {
-            return (
-              <EmptyCardState 
-                cardType={selectedCardType} 
-                onAddCard={animateAddButton}
-              />
-            );
-          } else {
-            return (
-          <Animated.FlatList
-            data={filteredCards}
-            renderItem={renderCardItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.cardsList}
-            showsVerticalScrollIndicator={false}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: false }
-            )}
-            scrollEventThrottle={16}
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
+        {/* Card Type Filters - Only show for list view */}
+        {viewMode === 'list' && (
+          <CardTypeFilter
+            cardTypes={cardTypes}
+            selectedType={selectedCardType}
+            onSelectType={setSelectedCardType}
           />
-            );
-          }
-        })()}
+        )}
+
+        {/* Stack view filter indicator */}
+        {viewMode === 'stack' && selectedCardType !== 'all' && (
+          <View style={styles.stackFilterIndicator}>
+            <Text style={styles.stackFilterText}>
+              {cardTypes.find(type => type.id === selectedCardType)?.name || 'All Cards'}
+            </Text>
+          </View>
+        )}
+
+        {/* Cards Display */}
+        <View style={viewMode === 'stack' ? styles.stackViewContainer : styles.listViewContainer}>
+          {(() => {
+            console.log('[CardsScreen] Render state:', { 
+              isLoading, 
+              cardsLength: cards.length, 
+              filteredCardsLength: filteredCards?.length || 0,
+              viewMode
+            });
+            
+            if (isLoading) {
+              return (
+                <View style={styles.loadingContainer}>
+                  <Ionicons name="card" size={40} color="#FF9500" />
+                  <Text style={styles.loadingText}>Loading your cards...</Text>
+                </View>
+              );
+            } else if (!filteredCards || filteredCards.length === 0) {
+              return (
+                <EmptyCardState 
+                  cardType={selectedCardType} 
+                  onAddCard={animateAddButton}
+                />
+              );
+            } else if (viewMode === 'stack') {
+              return (
+                <CardStack
+                  cards={filteredCards}
+                  onCardPress={handleCardPress}
+                  selectedCardType={selectedCardType}
+                />
+              );
+            } else {
+              return (
+                <Animated.FlatList
+                  data={filteredCards}
+                  renderItem={renderCardItem}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={[
+                    styles.cardsList,
+                    { paddingBottom: 75 + insets.bottom + 10 } // Tab bar height + safe area + extra padding
+                  ]}
+                  showsVerticalScrollIndicator={false}
+                  onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: false }
+                  )}
+                  scrollEventThrottle={16}
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                />
+              );
+            }
+          })()}
+        </View>
 
         {/* Card Details Modal */}
         {selectedCard && (
@@ -405,6 +496,7 @@ const CardsScreen = ({ navigation, route }) => {
             card={selectedCard}
             onClose={() => setShowCardDetails(false)}
             onDelete={() => handleDeleteCard(selectedCard.id)}
+            navigation={navigation}
           />
         )}
       </ImageBackground>
@@ -447,6 +539,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFF',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewToggle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   addButton: {
     width: 50,
     height: 50,
@@ -464,9 +569,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  stackFilterIndicator: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 5, // Reduced from 10 to bring filter closer to cards
+    marginTop: 5, // Small top margin for spacing from header
+  },
+  stackFilterText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  stackViewContainer: {
+    flex: 1,
+    paddingTop: 0, // Remove top padding to position stack at very top
+    marginTop: -10, // Negative margin to bring stack closer to header
+  },
+  listViewContainer: {
+    flex: 1,
+  },
   cardsList: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    // paddingBottom will be calculated dynamically in component
   },
   loadingContainer: {
     flex: 1,

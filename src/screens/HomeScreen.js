@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WaoCardIcon from '../components/WaoCardIcon';
 import { useAuth } from '../context/AuthContext';
 import styles from '../styles/homeScreenStyles';
@@ -26,6 +27,7 @@ const CARD_WIDTH = width * 0.8;
 const HomeScreen = ({ navigation }) => {
   // Get userData from authentication context
   const { userData, userToken, isLoading, fetchUserData } = useAuth();
+  const insets = useSafeAreaInsets();
   
   const [activeTab, setActiveTab] = useState('Home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
@@ -101,11 +103,21 @@ const HomeScreen = ({ navigation }) => {
 
   // Function to render service category items
   const renderServiceCategory = (item, index) => {
+    // Handle navigation based on item ID
+    const handleServicePress = () => {
+      if (item.id === 1) { // Airtime & Bills
+        navigation.navigate('PaymentsScreen');
+      } else if (item.id === 5) { // My Estate
+        navigation.navigate('MyEstateScreen');
+      }
+    };
+    
     return (
       <TouchableOpacity
         key={item.id}
         style={styles.serviceItemCarousel}
         activeOpacity={0.7}
+        onPress={handleServicePress}
       >
         <LinearGradient
           colors={['rgba(255, 149, 0, 0.8)', 'rgba(255, 120, 0, 0.9)']}
@@ -279,8 +291,9 @@ const HomeScreen = ({ navigation }) => {
             )}
           </View>
           
+
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>Hi, <Text style={styles.nameText}>{userData?.first_name || 'User'}</Text> 👋</Text>
+            <Text style={styles.title}>Hi, <Text style={styles.titleLight}>{userData?.first_name || 'User'}</Text> 👋</Text>
           </View>
           <TouchableOpacity style={styles.notificationContainer} activeOpacity={0.7}>
             <Ionicons name="notifications-outline" size={24} color="#FF9500" />
@@ -291,7 +304,10 @@ const HomeScreen = ({ navigation }) => {
         {/* Scrollable Content Area with RefreshControl */}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 75 + insets.bottom + 10 } // Tab bar height + safe area + extra padding
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

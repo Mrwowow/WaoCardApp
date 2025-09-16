@@ -21,13 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNotification } from '../context/NotificationContext';
 import useConfirmation from '../hooks/useConfirmation';
 
-// Conditionally import Camera based on if it's installed
-let Camera = null;
-try {
-  Camera = require('expo-camera').Camera;
-} catch (error) {
-  console.log('Camera module not available');
-}
+import { Camera } from 'expo-camera';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,32 +31,44 @@ const AddCardScreen = ({ navigation, route }) => {
   const { confirm, confirmDelete, ConfirmationComponent } = useConfirmation();
   
  // Get parameters passed in navigation
-  const { onAddCard, cardTypes } = route.params || {};
+  const { onAddCard, cardTypes, editCard, fromModal } = route.params || {};
+  const isEditMode = !!editCard;
   
-  // Form state
-  const [cardType, setCardType] = useState('payment');
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardHolderName, setCardHolderName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCVV, setCardCVV] = useState('');
-  const [cardIssuer, setCardIssuer] = useState('');
-  const [cardLogo, setCardLogo] = useState(null);
-  const [cardNetwork, setCardNetwork] = useState('');
-  const [loyaltyPoints, setLoyaltyPoints] = useState('');
-  const [giftCardBalance, setGiftCardBalance] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
+  // Form state - initialize with edit card data if in edit mode
+  const [cardType, setCardType] = useState(editCard?.type || 'payment');
+  const [cardName, setCardName] = useState(editCard?.name || '');
+  const [cardNumber, setCardNumber] = useState(editCard?.number || '');
+  const [cardHolderName, setCardHolderName] = useState(editCard?.holderName || '');
+  const [cardExpiry, setCardExpiry] = useState(editCard?.expiry || '');
+  const [cardCVV, setCardCVV] = useState(editCard?.cvv || '');
+  const [cardIssuer, setCardIssuer] = useState(editCard?.issuer || '');
+  const [cardLogo, setCardLogo] = useState(editCard?.logo || null);
+  const [cardNetwork, setCardNetwork] = useState(editCard?.network || '');
+  const [loyaltyPoints, setLoyaltyPoints] = useState(editCard?.points || '');
+  const [giftCardBalance, setGiftCardBalance] = useState(editCard?.balance || '');
+  const [eventDate, setEventDate] = useState(editCard?.date || '');
+  const [eventLocation, setEventLocation] = useState(editCard?.location || '');
   
-  // UI state
-  const [currentStep, setCurrentStep] = useState(1);
+  // ID Card specific fields
+  const [cardPhoto, setCardPhoto] = useState(editCard?.photo || null);
+  const [campusImage, setCampusImage] = useState(editCard?.campusImage || null);
+  const [cardRole, setCardRole] = useState(editCard?.role || '');
+  const [cardDepartment, setCardDepartment] = useState(editCard?.department || '');
+  const [cardMealPlan, setCardMealPlan] = useState(editCard?.mealPlan || '');
+  const [cardBalance, setCardBalance] = useState(editCard?.balance || '');
+  const [cardLevel, setCardLevel] = useState(editCard?.level || '');
+  const [mealsRemaining, setMealsRemaining] = useState(editCard?.mealsRemaining || '');
+  const [backgroundColor, setBackgroundColor] = useState(editCard?.backgroundColor || '#1e3c72');
+  
+  // UI state - start at step 2 for edit mode
+  const [currentStep, setCurrentStep] = useState(isEditMode ? 2 : 1);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   
   // Check camera permissions when needed
   useEffect(() => {
-    if (isCameraVisible && Camera) {
+    if (isCameraVisible) {
       (async () => {
         try {
           const { status } = await Camera.requestCameraPermissionsAsync();
@@ -145,57 +151,96 @@ const AddCardScreen = ({ navigation, route }) => {
             }
 
             // Collect card data based on type
-            const newCard = {
+            const cardData = {
                 type: cardType,
                 name: cardName,
                 issuer: cardIssuer,
                 logo: cardLogo,
             };
 
+            // If editing, preserve the original ID and creation time
+            if (isEditMode) {
+                cardData.id = editCard.id;
+                cardData.createdAt = editCard.createdAt;
+                cardData.updatedAt = new Date().toISOString();
+            }
+
             // Add card-specific fields (this stays the same)
             switch (cardType) {
                 case 'payment':
-                    newCard.number = cardNumber;
-                    newCard.holderName = cardHolderName;
-                    newCard.expiry = cardExpiry;
-                    newCard.cvv = cardCVV;
-                    newCard.network = cardNetwork;
+                    cardData.number = cardNumber;
+                    cardData.holderName = cardHolderName;
+                    cardData.expiry = cardExpiry;
+                    cardData.cvv = cardCVV;
+                    cardData.network = cardNetwork;
                     break;
         case 'loyalty':
-          newCard.number = cardNumber;
-          newCard.points = loyaltyPoints;
+          cardData.number = cardNumber;
+          cardData.points = loyaltyPoints;
           break;
         case 'gift':
-          newCard.number = cardNumber;
-          newCard.balance = giftCardBalance;
+          cardData.number = cardNumber;
+          cardData.balance = giftCardBalance;
           break;
         case 'ticket':
-          newCard.number = cardNumber;
-          newCard.date = eventDate;
-          newCard.location = eventLocation;
+          cardData.number = cardNumber;
+          cardData.date = eventDate;
+          cardData.location = eventLocation;
+          break;
+        case 'id':
+          cardData.number = cardNumber;
+          cardData.holderName = cardHolderName;
+          cardData.role = cardRole;
+          cardData.department = cardDepartment;
+          cardData.mealPlan = cardMealPlan;
+          cardData.balance = cardBalance;
+          cardData.level = cardLevel;
+          cardData.mealsRemaining = mealsRemaining;
+          cardData.expiry = cardExpiry;
+          cardData.photo = cardPhoto;
+          cardData.campusImage = campusImage;
+          cardData.backgroundColor = backgroundColor;
           break;
         default:
-                    newCard.number = cardNumber;
+                    cardData.number = cardNumber;
             }
 
-            // Go back to the Cards Tab using proper nested navigation
-            console.log('[AddCardScreen] Navigating back with new card:', cardName);
+            // Navigate based on where the edit was opened from
+            console.log(`[AddCardScreen] ${isEditMode ? 'Updating' : 'Adding'} card:`, cardName);
             
-            // Add a timestamp to ensure React treats it as a new object
-            // This helps ensure the route.params change is detected
-            navigation.navigate('Tabs', {
-                screen: 'CardsTab',
-                params: {
-                    screen: 'CardsList',
-                    params: { 
-                        newCard,
-                        timestamp: Date.now() // Add timestamp to force param refresh
+            if (fromModal && isEditMode) {
+                // If edit was opened from modal, go back with updated card data
+                navigation.navigate({
+                    name: 'Tabs',
+                    params: {
+                        screen: 'CardsTab',
+                        params: {
+                            screen: 'CardsList',
+                            params: {
+                                updatedCard: cardData,
+                                showModal: true, // Flag to reopen modal with updated card
+                                timestamp: Date.now()
+                            }
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                // Original navigation to cards list
+                navigation.navigate('Tabs', {
+                    screen: 'CardsTab',
+                    params: {
+                        screen: 'CardsList',
+                        params: { 
+                            [isEditMode ? 'updatedCard' : 'newCard']: cardData,
+                            timestamp: Date.now() // Add timestamp to force param refresh
+                        }
+                    }
+                });
+            }
+            
             // Show success notification
-            notification.success(`${cardName} added successfully!`, {
-                title: 'Card Added'
+            notification.success(`${cardName} ${isEditMode ? 'updated' : 'added'} successfully!`, {
+                title: `Card ${isEditMode ? 'Updated' : 'Added'}`
             });
     }
   };
@@ -278,15 +323,75 @@ const AddCardScreen = ({ navigation, route }) => {
       });
     }
   };
+
+  // Open image picker for profile photo
+  const pickProfilePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        notification.error('We need access to your photo library to select a profile photo', {
+          title: 'Permission Required'
+        });
+        return;
+      }
+      
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled) {
+        setCardPhoto(result.assets[0].uri);
+        notification.success('Profile photo selected', {
+          animPattern: 'FADE_IN'
+        });
+      }
+    } catch (error) {
+      console.error('Error picking profile photo:', error);
+      notification.error('Failed to select profile photo. Please try again.', {
+        title: 'Error'
+      });
+    }
+  };
+
+  // Open image picker for campus/banner image
+  const pickCampusImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        notification.error('We need access to your photo library to select a banner image', {
+          title: 'Permission Required'
+        });
+        return;
+      }
+      
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled) {
+        setCampusImage(result.assets[0].uri);
+        notification.success('Banner image selected', {
+          animPattern: 'FADE_IN'
+        });
+      }
+    } catch (error) {
+      console.error('Error picking campus image:', error);
+      notification.error('Failed to select banner image. Please try again.', {
+        title: 'Error'
+      });
+    }
+  };
   
   // Open camera to scan QR/barcode - simplified for now
   const openScanner = async () => {
-    if (!Camera) {
-      notification.error('The camera module is not available on this device.', {
-        title: 'Camera Not Available'
-      });
-      return;
-    }
     setIsCameraVisible(true);
   };
   
@@ -619,6 +724,188 @@ const AddCardScreen = ({ navigation, route }) => {
             </View>
           </>
         )}
+
+        {/* ID Card specific fields */}
+        {cardType === 'id' && (
+          <>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Card Number/ID</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., S-2024-5431"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={cardNumber}
+                onChangeText={setCardNumber}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Cardholder Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., John Doe"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={cardHolderName}
+                onChangeText={setCardHolderName}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Role/Position</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Student, Employee, Faculty"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={cardRole}
+                onChangeText={setCardRole}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Department/Division</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Computer Science, HR"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={cardDepartment}
+                onChangeText={setCardDepartment}
+              />
+            </View>
+
+            <View style={styles.rowContainer}>
+              <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                <Text style={styles.label}>Expiry Date</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="MM/YY"
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={cardExpiry}
+                  onChangeText={formatExpiryDate}
+                  keyboardType="numeric"
+                  maxLength={5}
+                />
+              </View>
+
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Balance (Optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="$350.00"
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={cardBalance}
+                  onChangeText={setCardBalance}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <View style={styles.rowContainer}>
+              <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                <Text style={styles.label}>Level (Optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Senior, Junior, Freshman"
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={cardLevel}
+                  onChangeText={setCardLevel}
+                />
+              </View>
+            </View>
+
+            <View style={styles.rowContainer}>
+              <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
+                <Text style={styles.label}>Meal Plan (Optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Metro Plan"
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={cardMealPlan}
+                  onChangeText={setCardMealPlan}
+                />
+              </View>
+
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Meals Left (Optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="56"
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={mealsRemaining}
+                  onChangeText={setMealsRemaining}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            {/* Background Color Selector */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Card Background Color</Text>
+              <View style={styles.colorSelector}>
+                {['#1e3c72', '#5856D6', '#34C759', '#FF2D55', '#FF9500', '#8E8E93'].map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color },
+                      backgroundColor === color && styles.colorOptionSelected
+                    ]}
+                    onPress={() => setBackgroundColor(color)}
+                  >
+                    {backgroundColor === color && (
+                      <Ionicons name="checkmark" size={16} color="#FFF" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Profile Photo */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Profile Photo (Optional)</Text>
+              <TouchableOpacity style={styles.photoSelector} onPress={pickProfilePhoto}>
+                {cardPhoto ? (
+                  <View style={styles.photoPreviewContainer}>
+                    <Image source={{ uri: cardPhoto }} style={styles.photoPreview} />
+                    <TouchableOpacity
+                      style={styles.photoRemoveButton}
+                      onPress={() => setCardPhoto(null)}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.photoPlaceholder}>
+                    <Ionicons name="person-outline" size={30} color="#FFF" />
+                    <Text style={styles.photoPlaceholderText}>Add Photo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Campus/Banner Image */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Campus/Banner Image (Optional)</Text>
+              <TouchableOpacity style={styles.bannerSelector} onPress={pickCampusImage}>
+                {campusImage ? (
+                  <View style={styles.bannerPreviewContainer}>
+                    <Image source={{ uri: campusImage }} style={styles.bannerPreview} />
+                    <TouchableOpacity
+                      style={styles.bannerRemoveButton}
+                      onPress={() => setCampusImage(null)}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.bannerPlaceholder}>
+                    <Ionicons name="image-outline" size={30} color="#FFF" />
+                    <Text style={styles.bannerPlaceholderText}>Add Banner</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
         
         {/* Card logo */}
         <View style={styles.formGroup}>
@@ -654,8 +941,8 @@ const AddCardScreen = ({ navigation, route }) => {
             colors={['#FF9500', '#E08600']}
             style={styles.nextButtonGradient}
           >
-            <Text style={styles.nextButtonText}>Add Card</Text>
-            <Ionicons name="card" size={20} color="#FFF" />
+            <Text style={styles.nextButtonText}>{isEditMode ? 'Update Card' : 'Add Card'}</Text>
+            <Ionicons name={isEditMode ? "checkmark" : "card"} size={20} color="#FFF" />
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -704,20 +991,6 @@ const AddCardScreen = ({ navigation, route }) => {
   
   // Camera view for QR/barcode scanning
   const renderCameraView = () => {
-    if (!Camera) {
-      return (
-        <View style={styles.cameraContainer}>
-          <Text style={styles.cameraText}>Camera module not available</Text>
-          <TouchableOpacity 
-            style={styles.cameraCloseButton} 
-            onPress={() => setIsCameraVisible(false)}
-          >
-            <Text style={styles.cameraCloseButtonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-  
     if (hasPermission === null) {
       return (
         <View style={styles.cameraContainer}>
@@ -786,7 +1059,8 @@ const AddCardScreen = ({ navigation, route }) => {
             <Ionicons name="chevron-back" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {currentStep === 1 ? 'Add New Card' : `New ${getCardTypeName(cardType)}`}
+            {currentStep === 1 ? (isEditMode ? 'Edit Card' : 'Add New Card') : 
+             `${isEditMode ? 'Edit' : 'New'} ${getCardTypeName(cardType)}`}
           </Text>
           <View style={{ width: 40 }} />
         </View>
@@ -1119,7 +1393,110 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     marginBottom: 20,
-  }
+  },
+  // ID Card specific styles
+  colorSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorOptionSelected: {
+    borderColor: '#FFF',
+    borderWidth: 3,
+  },
+  photoSelector: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
+  photoPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoPlaceholderText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 5,
+    fontSize: 12,
+  },
+  photoPreviewContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  photoRemoveButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bannerSelector: {
+    width: '100%',
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  bannerPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bannerPlaceholderText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 5,
+    fontSize: 14,
+  },
+  bannerPreviewContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  bannerPreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  bannerRemoveButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default AddCardScreen;

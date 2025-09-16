@@ -85,7 +85,7 @@ const useConfirmation = () => {
   }, []);
 
   // The actual confirmation modal component
-  const ConfirmationComponent = useCallback(() => (
+  const ConfirmationComponent = useCallback((props) => (
     <ConfirmationModal
       visible={isVisible}
       title={config.title}
@@ -98,6 +98,7 @@ const useConfirmation = () => {
       icon={config.icon}
       hideCancel={config.hideCancel}
       closeOnTouchOutside={config.closeOnTouchOutside}
+      {...props}
     />
   ), [isVisible, config]);
 

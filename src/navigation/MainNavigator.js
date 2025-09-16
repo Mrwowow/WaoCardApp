@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { View, TouchableOpacity, StyleSheet, Text, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -15,6 +16,11 @@ import MerchantDetailScreen from '../screens/MerchantDetailScreen';
 import OfflineMapScreen from '../screens/OfflineMapScreen';
 import MapSettingsScreen from '../screens/MapSettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import PaymentsScreen from '../screens/PaymentsScreen';
+import AirtimeScreen from '../screens/AirtimeScreen';
+import BillsPaymentScreen from '../screens/BillsPaymentScreen';
+import MyEstateScreen from '../screens/MyEstateScreen';
+import DataPurchaseScreen from '../screens/DataPurchaseScreen';
 
 import { colors, fonts } from '../styles/theme';
 
@@ -82,10 +88,17 @@ const MapNavigator = ({ initialLocation, offlineMode }) => {
 // Center Button Component for Tab Navigator
 const CenterButton = (props) => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  
+  const centerTabStyle = {
+    ...styles.centerTab,
+    bottom: 15 + insets.bottom, // Adjust position based on safe area
+  };
+  
   return (
     <View style={styles.centerTabContainer}>
       <TouchableOpacity
-        style={styles.centerTab}
+        style={centerTabStyle}
         onPress={() => navigation.navigate('MapStack')}
         activeOpacity={0.7}
       >
@@ -110,6 +123,14 @@ const AnalyticsScreen = () => (
 
 // Main Tab Navigator
 const TabNavigator = ({ initialLocation, offlineMode }) => {
+  const insets = useSafeAreaInsets();
+  
+  const tabBarStyle = {
+    ...styles.tabBarStyle,
+    paddingBottom: insets.bottom + 5, // Add safe area bottom inset
+    height: 75 + insets.bottom, // Adjust height to accommodate safe area
+  };
+  
   return (
     <Tab.Navigator
       screenOptions={{
@@ -117,7 +138,7 @@ const TabNavigator = ({ initialLocation, offlineMode }) => {
         tabBarShowLabel: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
-        tabBarStyle: styles.tabBarStyle,
+        tabBarStyle: tabBarStyle,
       }}
     >
       <Tab.Screen
@@ -211,6 +232,81 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
         component={ProfileScreen} 
         options={{ headerShown: false }}
       />
+      
+      {/* Payments screens */}
+      <Stack.Screen 
+        name="PaymentsScreen" 
+        component={PaymentsScreen}
+        options={{ 
+          headerShown: true,
+          headerTitle: "Airtime & Bills",
+          headerStyle: {
+            backgroundColor: colors.background,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
+          headerTintColor: colors.primary,
+          headerTitleStyle: {
+            fontFamily: fonts.semiBold,
+          },
+        }}
+      />
+      
+      <Stack.Screen 
+        name="AirtimeScreen" 
+        component={AirtimeScreen}
+        options={{ 
+          headerShown: true,
+          headerTitle: "Buy Airtime",
+          headerStyle: {
+            backgroundColor: colors.background,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
+          headerTintColor: colors.primary,
+          headerTitleStyle: {
+            fontFamily: fonts.semiBold,
+          },
+        }}
+      />
+      
+      <Stack.Screen 
+        name="BillsPaymentScreen" 
+        component={BillsPaymentScreen}
+        options={{ 
+          headerShown: true,
+          headerTitle: "Pay Bills",
+          headerStyle: {
+            backgroundColor: colors.background,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
+          headerTintColor: colors.primary,
+          headerTitleStyle: {
+            fontFamily: fonts.semiBold,
+          },
+        }}
+      />
+      
+      <Stack.Screen 
+        name="DataPurchaseScreen" 
+        component={DataPurchaseScreen}
+        options={{ 
+          headerShown: false
+        }}
+      />
+      
+      {/* My Estate Screen */}
+      <Stack.Screen 
+        name="MyEstateScreen" 
+        component={MyEstateScreen}
+        options={{ 
+          headerShown: false, // MyEstateScreen has its own header
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -222,12 +318,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderTopColor: 'rgba(255, 149, 0, 0.2)',
     elevation: 0,
-    height: 75,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 5,
+    height: 75, // Base height, will be adjusted with safe area
     paddingTop: 10,
     left: 0,
     right: 0,
     bottom: 0,
+    // paddingBottom will be calculated dynamically with safe area insets
   },
   tabItem: {
     alignItems: 'center',
@@ -245,7 +341,7 @@ const styles = StyleSheet.create({
   },
   centerTab: {
     position: 'absolute',
-    bottom: 15,
+    // bottom will be calculated dynamically with safe area insets
     width: 65,
     height: 65,
     borderRadius: 15,

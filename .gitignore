@@ -35,4 +35,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# API Keys and secrets
+*.postman_collection.json
+.env
+.env.local
+.env.production
+.env.staging
+
 app-example

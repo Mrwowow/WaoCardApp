@@ -11,6 +11,7 @@ import { setTopLevelNavigator } from './services/NavigationService';
 
 const AppContainer = () => {
   const { appState, initialLocation, offlineMode, login } = useApp();
+  const navigationRef = useRef(null);
 
   // Show loading
   if (appState === 'loading') {
@@ -24,7 +25,6 @@ const AppContainer = () => {
   }
   
   // Show main app with navigation
-  const navigationRef = useRef(null);
   return (
     <NavigationContainer ref={navigationRef} onReady={() => setTopLevelNavigator(navigationRef.current)}>
         {appState === 'authenticated' ? (

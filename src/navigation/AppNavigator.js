@@ -8,6 +8,7 @@ import MainNavigator from './MainNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NavigationService from '../services/NavigationService';
 import NavigationDebugger from '../utils/NavigationDebugger';
+import BiometricAuth from '../services/biometricAuth';
 
 const Stack = createStackNavigator();
 
@@ -25,6 +26,19 @@ export default function AppNavigator({ initialLocation, offlineMode, isAuthentic
         token = await AsyncStorage.getItem('waocard_token');
         console.log('AppNavigator: Token from storage:', token ? 'Found token' : 'No token found');
         NavigationDebugger.debugLog('Token from storage:', token ? 'Found token' : 'No token found');
+        
+        // If no token, check if biometric auth is enabled
+        if (!token) {
+          console.log('AppNavigator: No token found, checking biometric auth...');
+          const isBiometricEnabled = await BiometricAuth.isBiometricAuthEnabled();
+          console.log('AppNavigator: Biometric auth enabled:', isBiometricEnabled);
+          
+          if (isBiometricEnabled) {
+            // We have biometric credentials saved, but no active session
+            // Let the Auth stack handle the auto-login
+            console.log('AppNavigator: Biometric credentials available, will auto-login from LoginScreen');
+          }
+        }
       } catch (e) {
         console.error('AppNavigator: Failed to get token from storage:', e);
         NavigationDebugger.debugLog('Failed to get token from storage:', e);

@@ -16,7 +16,7 @@ export default {
     width: '100%',
   },
   scrollContent: {
-    paddingBottom: 100,
+    // paddingBottom will be calculated dynamically in component
   },
   header: {
     flexDirection: 'row',
@@ -269,6 +269,15 @@ export default {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.6)',
     paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  titleLight: {
+    fontWeight: '300',
+    color: '#ccc',
   },
   addNewButton: {
     padding: 5,

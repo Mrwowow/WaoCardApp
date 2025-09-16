@@ -204,7 +204,7 @@ export const AuthProvider = ({ children }) => {
           // Placeholder user data until full fetch
           const initialUserData = {
             id: userId.toString(),
-            username: username,
+            username: usernameOrToken,
             first_name: '',
             last_name: '',
             wallet: '0.00'

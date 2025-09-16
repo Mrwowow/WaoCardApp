@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "WaoCard",
-    "slug": "waocard",
+    "slug": "waocardapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -27,6 +27,19 @@
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c4697d4a-0438-417c-8315-483001454722"
+      }
+    },
+    "owner": "waocard",
+    "plugins": [
+      "expo-asset",
+      "expo-camera",
+      "expo-font",
+      "expo-router",
+      "expo-web-browser"
+    ]
   }
 }

@@ -143,8 +143,8 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
     // Check for biometric authentication availability
     checkBiometrics();
     
-    // Check for saved credentials
-    checkSavedCredentials();
+    // Check for saved credentials and auto-login if available
+    checkSavedCredentialsAndAutoLogin();
   }, []);
   
   // Show notification helper
@@ -181,17 +181,13 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
         console.log('LoginScreen: Biometric authentication is not available on this device');
       }
       
-      // For testing purposes, force biometrics to be available
-      // Remove this in production code
-      console.log('LoginScreen: Setting biometricsAvailable to true for testing');
-      setBiometricsAvailable(true);
     } catch (error) {
       console.error('Error checking biometrics:', error);
       setBiometricsAvailable(false);
     }
   };
   
-  const checkSavedCredentials = async () => {
+  const checkSavedCredentialsAndAutoLogin = async () => {
     try {
       console.log('LoginScreen: Checking for saved credentials');
       
@@ -208,6 +204,13 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
           // Don't actually load the credentials yet - we'll get them during authentication
           console.log('LoginScreen: Biometric authentication is enabled and credentials are stored');
           setSavedCredentials(true); // Just set to true as a flag that credentials exist
+          
+          // Auto-trigger biometric authentication after a short delay
+          setTimeout(() => {
+            console.log('LoginScreen: Auto-triggering biometric authentication');
+            showNotification('Authenticating with saved credentials...', 'info');
+            handleBiometricAuth();
+          }, 1000);
         } else {
           console.log('LoginScreen: No credentials found even though biometrics is enabled');
           setSavedCredentials(null);
@@ -217,10 +220,6 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
         setSavedCredentials(null);
       }
       
-      // For testing: Temporarily simulate having credentials
-      // Remove this in production code
-      console.log('LoginScreen: Setting saved credentials to true for testing');
-      setSavedCredentials(true);
     } catch (error) {
       console.error('Error checking saved credentials:', error);
       setSavedCredentials(null);
@@ -616,7 +615,7 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
         
         {/* Sign Up Link */}
         <View style={styles.signUpContainer}>
-          <Text style={styles.signUpText}>Don't have an account?</Text>
+          <Text style={styles.signUpText}>Don&apos;t have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <Text style={styles.signUpLink}>Sign Up</Text>
           </TouchableOpacity>

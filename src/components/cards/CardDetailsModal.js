@@ -18,13 +18,15 @@ import * as Haptics from 'expo-haptics';
 import QRCode from 'react-native-qrcode-svg';
 
 import CardListItem from './CardListItem';
+import IDCardTemplate from './IDCardTemplate';
 
 const { width, height } = Dimensions.get('window');
 
-const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
+const CardDetailsModal = ({ visible, card, onClose, onDelete, navigation }) => {
   // Animation
   const slideAnim = useRef(new Animated.Value(height)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef(null);
   
   useEffect(() => {
     if (visible) {
@@ -172,13 +174,61 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
           >
             <View style={styles.handle} />
             
-            {/* Card Preview */}
-            <View style={styles.cardPreviewContainer}>
-              <CardListItem card={card} onPress={() => {}} />
-            </View>
+            <ScrollView 
+              ref={scrollViewRef}
+              style={styles.scrollContainer}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              {/* Card Preview */}
+              <View style={styles.cardPreviewContainer}>
+                {card.type === 'id' ? (
+                  <IDCardTemplate 
+                    card={card} 
+                    showActions={true}
+                    scrollViewRef={scrollViewRef}
+                    onShare={handleShare}
+                    onEdit={() => {
+                      Platform.OS === 'ios' && 
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      
+                      // Close modal first
+                      onClose();
+                      
+                      // Navigate to AddCard screen in edit mode
+                      if (navigation) {
+                        const cardTypes = [
+                          { id: 'payment', name: 'Payment', icon: 'card-outline' },
+                          { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
+                          { id: 'store', name: 'Store Cards', icon: 'storefront-outline' },
+                          { id: 'id', name: 'ID', icon: 'id-card-outline' },
+                          { id: 'ticket', name: 'Tickets', icon: 'ticket-outline' },
+                          { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
+                          { id: 'business', name: 'Business', icon: 'briefcase-outline' },
+                        ];
+                        
+                        navigation.navigate('AddCard', { 
+                          editCard: card,
+                          cardTypes,
+                          fromModal: true // Flag to indicate edit was opened from modal
+                        });
+                      }
+                    }}
+                    onDelete={() => {
+                      Platform.OS === 'ios' && 
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      onDelete();
+                    }}
+                  />
+                ) : (
+                  <CardListItem card={card} onPress={() => {}} />
+                )}
+              </View>
             
-            {/* Actions */}
-            <View style={styles.actionsContainer}>
+            {/* Actions - Hidden for ID cards since they have their own 3-dot menu */}
+            {card.type !== 'id' && (
+              <View style={styles.actionsContainer}>
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={handleShare}
@@ -197,8 +247,29 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
                 onPress={() => {
                   Platform.OS === 'ios' && 
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  // Add update functionality
-                  alert('Update feature coming soon');
+                  
+                  // Close modal first
+                  onClose();
+                  
+                  // Navigate to AddCard screen in edit mode
+                  if (navigation) {
+                    // Get card types for navigation
+                    const cardTypes = [
+                      { id: 'payment', name: 'Payment', icon: 'card-outline' },
+                      { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
+                      { id: 'store', name: 'Store Cards', icon: 'storefront-outline' },
+                      { id: 'id', name: 'ID', icon: 'id-card-outline' },
+                      { id: 'ticket', name: 'Tickets', icon: 'ticket-outline' },
+                      { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
+                      { id: 'business', name: 'Business', icon: 'briefcase-outline' },
+                    ];
+                    
+                    navigation.navigate('AddCard', { 
+                      editCard: card,
+                      cardTypes,
+                      fromModal: true // Flag to indicate edit was opened from modal
+                    });
+                  }
                 }}
               >
                 <LinearGradient
@@ -226,10 +297,12 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
                 </LinearGradient>
                 <Text style={styles.actionText}>Delete</Text>
               </TouchableOpacity>
-            </View>
+              </View>
+            )}
             
-            {/* Card Details */}
-            <ScrollView style={styles.detailsContainer}>
+            {/* Card Details - Hidden for ID cards since they have their own details in 3-dot menu */}
+            {card.type !== 'id' && (
+              <ScrollView style={styles.detailsContainer}>
               <Text style={styles.detailsTitle}>Card Details</Text>
               
               {/* QR Code for cards that need it */}
@@ -290,6 +363,8 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete }) => {
                   </View>
                 );
               })}
+              </ScrollView>
+            )}
             </ScrollView>
             
             {/* Close Button */}
@@ -344,6 +419,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: 'rgba(255, 149, 0, 0.3)',
+    maxHeight: height * 0.85, // Maximum 85% of screen height
+    minHeight: 400, // Minimum height for smaller cards
   },
   handle: {
     width: 36,
@@ -354,10 +431,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
+  scrollContainer: {
+    maxHeight: height * 0.8, // Max 80% of screen height
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   cardPreviewContainer: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     alignItems: 'center',
+    flexShrink: 0, // Don't shrink the card preview
   },
   actionsContainer: {
     flexDirection: 'row',

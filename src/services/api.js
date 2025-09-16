@@ -33,19 +33,18 @@ export const apiRequest = async (endpoint, method = 'GET', data = null) => {
       redirect: "follow"
     };
     
+    // Always create FormData and include server key
+    const formdata = new FormData();
+    formdata.append("server_key", SERVER_KEY);
+    
+    // Append additional data if provided
     if (data) {
-      const formdata = new FormData();
-      
-      // Always append server key
-      formdata.append("server_key", SERVER_KEY);
-      
-      // Append all other data
       Object.keys(data).forEach(key => {
         formdata.append(key, data[key]);
       });
-      
-      options.body = formdata;
     }
+    
+    options.body = formdata;
     
     const response = await fetch(`${BASE_URL}/${endpoint}`, options);
     const result = await response.json();

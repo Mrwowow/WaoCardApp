@@ -9,11 +9,24 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import IDCardListItem from './IDCardListItem';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40; // 20px padding on each side
 
 const CardListItem = ({ card, onPress }) => {
+  // Use simplified ID card view for list display
+  if (card.type === 'id') {
+    return (
+      <TouchableOpacity
+        style={styles.container}
+        onPress={onPress}
+        activeOpacity={0.9}
+      >
+        <IDCardListItem card={card} />
+      </TouchableOpacity>
+    );
+  }
   // Card type specific properties
   const getCardIcon = () => {
     switch (card.type) {
@@ -82,18 +95,23 @@ const CardListItem = ({ card, onPress }) => {
         <View style={styles.cardHeader}>
           <View style={styles.issuerContainer}>
             {card.logo ? (
-              <Image source={{ uri: card.logo }} style={styles.issuerLogo} />
+              <Image 
+                source={{ uri: card.logo }} 
+                style={styles.issuerLogo}
+                resizeMode="contain"
+              />
             ) : (
               <View style={styles.issuerPlaceholder}>
-                <Text style={styles.issuerInitial}>
-                  {card.issuer ? card.issuer.charAt(0).toUpperCase() : 'C'}
-                </Text>
+                <Ionicons 
+                  name={getCardIcon()} 
+                  size={16} 
+                  color="#FFF" 
+                />
               </View>
             )}
             <Text style={styles.issuerName}>{card.issuer || 'Card'}</Text>
           </View>
           <View style={styles.typeContainer}>
-            <Ionicons name={getCardIcon()} size={16} color="#FFF" />
             <Text style={styles.typeText}>
               {card.type.charAt(0).toUpperCase() + card.type.slice(1)}
             </Text>
@@ -220,16 +238,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   issuerLogo: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 24,
+    borderRadius: 4,
     marginRight: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   issuerPlaceholder: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 24,
+    borderRadius: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
