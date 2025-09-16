@@ -92,7 +92,7 @@ const CenterButton = (props) => {
   
   const centerTabStyle = {
     ...styles.centerTab,
-    bottom: 15 + insets.bottom, // Adjust position based on safe area
+    bottom: 35 + insets.bottom, // Push button higher above the tab bar
   };
   
   return (
