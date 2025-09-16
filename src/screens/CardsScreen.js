@@ -330,14 +330,21 @@ const CardsScreen = ({ navigation, route }) => {
     setShowCardDetails(true);
   };
 
-  // Filter cards by type
+  // Filter cards by type and sort by most recent first
   const filteredCards = React.useMemo(() => {
     console.log('[CardsScreen] Filtering cards, type:', selectedCardType, 'total cards:', cards?.length || 0);
     if (!cards || cards.length === 0) return [];
     
-    return selectedCardType === 'all'
+    const filtered = selectedCardType === 'all'
       ? cards
       : cards.filter(card => card.type === selectedCardType);
+    
+    // Sort by createdAt date (most recent first)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0);
+      const dateB = new Date(b.createdAt || 0);
+      return dateB - dateA; // Most recent first
+    });
   }, [cards, selectedCardType]);
 
   // Header animation on scroll
@@ -373,7 +380,7 @@ const CardsScreen = ({ navigation, route }) => {
         </Animated.View>
 
         {/* Header Content */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <Text style={styles.headerTitle}>My Cards</Text>
           <View style={styles.headerActions}>
             {/* View mode toggle */}
@@ -530,7 +537,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 25,
     paddingBottom: 15,
     zIndex: 2,
   },
