@@ -187,10 +187,12 @@ const LandingScreen = ({ navigation }) => {
         <SafeAreaView style={styles.contentContainer}>
           {/* Logo and Branding */}
           <View style={styles.logoContainer}>
-            <WaoCardLogo width={80} height={80} />
-            <Text style={styles.appTitle}>
-              <Text style={styles.appTitleLight}>Wao</Text>Card
-            </Text>
+            <View style={styles.logoRow}>
+              <WaoCardLogo width={50} height={50} />
+              <Text style={styles.appTitle}>
+                <Text style={styles.appTitleLight}>Wao</Text>Card
+              </Text>
+            </View>
           </View>
           
           {/* Feature Slider */}
@@ -306,13 +308,18 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 100,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   appTitle: {
     fontSize: fonts.sizes.title,
     fontWeight: 'bold',
     color: colors.white,
-    marginTop: 10,
+    marginLeft: 12,
   },
   appTitleLight: {
     color: colors.primary,
