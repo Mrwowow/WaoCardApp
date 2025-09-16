@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import NavigationService for global navigation
 import NavigationService from '../../services/NavigationService';
@@ -18,6 +19,8 @@ import NavigationService from '../../services/NavigationService';
 const { height } = Dimensions.get('window');
 
 const EmptyCardState = ({ cardType, onAddCard }) => {
+  const insets = useSafeAreaInsets();
+  
   // Get navigation object directly using the hook
   const navigation = useNavigation();
   
@@ -111,7 +114,10 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
 
   return (
     <ScrollView 
-      contentContainerStyle={styles.scrollContainer}
+      contentContainerStyle={[
+        styles.scrollContainer,
+        { paddingBottom: insets.bottom + 75 + 20 } // Tab bar + safe area + extra
+      ]}
       showsVerticalScrollIndicator={true}
       bounces={true}
     >

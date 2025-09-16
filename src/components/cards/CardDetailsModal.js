@@ -11,6 +11,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -23,6 +24,8 @@ import IDCardTemplate from './IDCardTemplate';
 const { width, height } = Dimensions.get('window');
 
 const CardDetailsModal = ({ visible, card, onClose, onDelete, navigation }) => {
+  const insets = useSafeAreaInsets();
+  
   // Animation
   const slideAnim = useRef(new Animated.Value(height)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -169,7 +172,10 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete, navigation }) => {
           <Animated.View 
             style={[
               styles.modalContainer,
-              { transform: [{ translateY: slideAnim }] }
+              { 
+                transform: [{ translateY: slideAnim }],
+                paddingBottom: insets.bottom + 20
+              }
             ]}
           >
             <View style={styles.handle} />
@@ -415,7 +421,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: 'rgba(255, 149, 0, 0.3)',

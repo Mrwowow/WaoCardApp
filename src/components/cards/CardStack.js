@@ -6,11 +6,13 @@ import {
   Animated,
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CardStackItem from './CardStackItem';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const CardStack = ({ cards, onCardPress, selectedCardType }) => {
+  const insets = useSafeAreaInsets();
   const [expandedIndex, setExpandedIndex] = useState(0); // Start expanded with first card selected
   const animatedValues = useRef({}).current;
   const panRefs = useRef({}).current;
@@ -229,7 +231,7 @@ const CardStack = ({ cards, onCardPress, selectedCardType }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom + 75 + 10 }]}>
       <View style={styles.stackContainer}>
         {cards.slice().reverse().map((card, reverseIndex) => {
           const index = cards.length - 1 - reverseIndex;
