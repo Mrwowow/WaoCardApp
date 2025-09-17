@@ -37,6 +37,11 @@ const AddCardScreen = ({ navigation, route }) => {
   const { onAddCard, cardTypes, editCard, fromModal, preSelectedCardType, skipCardTypeSelection } = route.params || {};
   const isEditMode = !!editCard;
   
+  // Debug logging for parameters
+  console.log('[AddCardScreen] Route params:', route.params);
+  console.log('[AddCardScreen] preSelectedCardType:', preSelectedCardType);
+  console.log('[AddCardScreen] skipCardTypeSelection:', skipCardTypeSelection);
+  
   // Form state - initialize with edit card data if in edit mode, or use pre-selected card type
   const [cardType, setCardType] = useState(editCard?.type || preSelectedCardType || 'payment');
   const [cardName, setCardName] = useState(editCard?.name || '');
@@ -64,7 +69,9 @@ const AddCardScreen = ({ navigation, route }) => {
   const [backgroundColor, setBackgroundColor] = useState(editCard?.backgroundColor || '#1e3c72');
   
   // UI state - start at step 2 for edit mode or when skipping card type selection
-  const [currentStep, setCurrentStep] = useState(isEditMode || skipCardTypeSelection ? 2 : 1);
+  const initialStep = isEditMode || skipCardTypeSelection ? 2 : 1;
+  console.log('[AddCardScreen] Initial step:', initialStep, '(isEditMode:', isEditMode, ', skipCardTypeSelection:', skipCardTypeSelection, ')');
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);

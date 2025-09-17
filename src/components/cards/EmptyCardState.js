@@ -141,19 +141,18 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
       skipCardTypeSelection: cardType !== 'all' // Skip selection if we have a specific type
     };
     
+    console.log(`[EmptyCardState] Navigation params:`, navigationParams);
+    
     try {
-      // Try NavigationService first
-      if (NavigationService && NavigationService.navigateToAddCard) {
-        NavigationService.navigateToAddCard(cardTypeData, navigationParams);
-      } else {
-        // Direct navigation as fallback
-        navigation.navigate('AddCard', navigationParams);
-      }
+      // Use direct navigation with the new parameters
+      navigation.navigate('AddCard', navigationParams);
+      console.log(`[EmptyCardState] Successfully navigated to AddCard with preSelectedCardType: ${navigationParams.preSelectedCardType}`);
     } catch (error) {
       console.error("[EmptyCardState] Navigation error:", error);
       
       // Fallback navigation without special parameters
       try {
+        console.log("[EmptyCardState] Using fallback navigation");
         navigation.navigate('AddCard', { cardTypes: cardTypeData });
       } catch (navError) {
         console.error("[EmptyCardState] All navigation attempts failed:", navError);
