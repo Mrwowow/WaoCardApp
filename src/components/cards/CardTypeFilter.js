@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const CardTypeFilter = ({ cardTypes, selectedType, onSelectType }) => {
+const CardTypeFilter = React.memo(({ cardTypes, selectedType, onSelectType }) => {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -44,7 +44,7 @@ const CardTypeFilter = ({ cardTypes, selectedType, onSelectType }) => {
       </ScrollView>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

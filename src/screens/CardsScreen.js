@@ -325,10 +325,10 @@ const CardsScreen = ({ navigation, route }) => {
   };
 
   // View card details
-  const handleCardPress = (card) => {
+  const handleCardPress = React.useCallback((card) => {
     setSelectedCard(card);
     setShowCardDetails(true);
-  };
+  }, []);
 
   // Filter cards by type and sort by most recent first
   const filteredCards = React.useMemo(() => {
@@ -355,12 +355,12 @@ const CardsScreen = ({ navigation, route }) => {
   });
 
   // Render card item
-  const renderCardItem = ({ item }) => (
+  const renderCardItem = React.useCallback(({ item }) => (
     <CardListItem 
       card={item}
       onPress={() => handleCardPress(item)}
     />
-  );
+  ), [handleCardPress]);
 
   return (
     <SafeAreaView style={styles.container}>

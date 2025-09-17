@@ -18,7 +18,7 @@ import NavigationService from '../../services/NavigationService';
 
 const { height } = Dimensions.get('window');
 
-const EmptyCardState = ({ cardType, onAddCard }) => {
+const EmptyCardState = React.memo(({ cardType, onAddCard }) => {
   const insets = useSafeAreaInsets();
   
   // Get navigation object directly using the hook
@@ -221,7 +221,7 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
       </View>
     </ScrollView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   scrollContainer: {
