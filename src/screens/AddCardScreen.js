@@ -34,11 +34,11 @@ const AddCardScreen = ({ navigation, route }) => {
   const { confirm, confirmDelete, ConfirmationComponent } = useConfirmation();
   
  // Get parameters passed in navigation
-  const { onAddCard, cardTypes, editCard, fromModal } = route.params || {};
+  const { onAddCard, cardTypes, editCard, fromModal, preSelectedCardType, skipCardTypeSelection } = route.params || {};
   const isEditMode = !!editCard;
   
-  // Form state - initialize with edit card data if in edit mode
-  const [cardType, setCardType] = useState(editCard?.type || 'payment');
+  // Form state - initialize with edit card data if in edit mode, or use pre-selected card type
+  const [cardType, setCardType] = useState(editCard?.type || preSelectedCardType || 'payment');
   const [cardName, setCardName] = useState(editCard?.name || '');
   const [cardNumber, setCardNumber] = useState(editCard?.number || '');
   const [cardHolderName, setCardHolderName] = useState(editCard?.holderName || '');
@@ -63,8 +63,8 @@ const AddCardScreen = ({ navigation, route }) => {
   const [mealsRemaining, setMealsRemaining] = useState(editCard?.mealsRemaining || '');
   const [backgroundColor, setBackgroundColor] = useState(editCard?.backgroundColor || '#1e3c72');
   
-  // UI state - start at step 2 for edit mode
-  const [currentStep, setCurrentStep] = useState(isEditMode ? 2 : 1);
+  // UI state - start at step 2 for edit mode or when skipping card type selection
+  const [currentStep, setCurrentStep] = useState(isEditMode || skipCardTypeSelection ? 2 : 1);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);

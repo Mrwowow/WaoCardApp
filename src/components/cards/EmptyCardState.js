@@ -112,19 +112,19 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
 
   // Button press handler 
   const handleAddCardPress = () => {
-    console.log("[EmptyCardState] Add card button pressed");
+    console.log(`[EmptyCardState] Add ${cardType} card button pressed`);
     
-    // 1. First, try using the provided callback
+    // 1. First, try using the provided callback with specific card type
     if (onAddCard && typeof onAddCard === 'function') {
       console.log("[EmptyCardState] Using provided onAddCard callback");
       onAddCard();
       return;
     }
     
-    // 2. If no callback, use NavigationService as a fallback
-    console.log("[EmptyCardState] Using NavigationService as fallback");
+    // 2. Navigate directly to AddCard with pre-selected card type
+    console.log(`[EmptyCardState] Navigating directly to AddCard with cardType: ${cardType}`);
     
-    // Get card types data
+    // Get card types data for reference
     const cardTypeData = [
       { id: 'payment', name: 'Payment', icon: 'card-outline' },
       { id: 'loyalty', name: 'Loyalty', icon: 'ribbon-outline' },
@@ -134,12 +134,25 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
       { id: 'business', name: 'Business', icon: 'briefcase-outline' },
     ];
     
+    // Navigation parameters to skip card type selection and go directly to form
+    const navigationParams = {
+      cardTypes: cardTypeData,
+      preSelectedCardType: cardType !== 'all' ? cardType : 'payment', // Skip to specific type or default to payment
+      skipCardTypeSelection: cardType !== 'all' // Skip selection if we have a specific type
+    };
+    
     try {
-      NavigationService.navigateToAddCard(cardTypeData);
+      // Try NavigationService first
+      if (NavigationService && NavigationService.navigateToAddCard) {
+        NavigationService.navigateToAddCard(cardTypeData, navigationParams);
+      } else {
+        // Direct navigation as fallback
+        navigation.navigate('AddCard', navigationParams);
+      }
     } catch (error) {
-      console.error("[EmptyCardState] Navigation service error:", error);
+      console.error("[EmptyCardState] Navigation error:", error);
       
-      // 3. If NavigationService fails, try direct navigation as last resort
+      // Fallback navigation without special parameters
       try {
         navigation.navigate('AddCard', { cardTypes: cardTypeData });
       } catch (navError) {
