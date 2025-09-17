@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, fonts } from '../../styles/theme';
 
 const CardTypeFilter = React.memo(({ cardTypes, selectedType, onSelectType }) => {
   return (
@@ -29,7 +30,7 @@ const CardTypeFilter = React.memo(({ cardTypes, selectedType, onSelectType }) =>
             <Ionicons 
               name={type.icon} 
               size={20} 
-              color={selectedType === type.id ? '#FFF' : '#FF9500'} 
+              color={selectedType === type.id ? colors.white : colors.primary} 
             />
             <Text 
               style={[
@@ -66,16 +67,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 149, 0, 0.3)',
   },
   filterButtonSelected: {
-    backgroundColor: '#FF9500',
+    backgroundColor: colors.primary,
   },
   filterText: {
-    color: '#FF9500',
+    color: colors.primary,
     fontWeight: '500',
-    fontSize: 14,
+    fontSize: fonts.sizes.medium,
     marginLeft: 6,
   },
   filterTextSelected: {
-    color: '#FFF',
+    color: colors.white,
   },
 });
 
