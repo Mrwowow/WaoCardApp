@@ -31,23 +31,43 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
     }
   }, [navigation]);
 
+  // Get dynamic title based on selected card type
+  const getTitle = () => {
+    switch (cardType) {
+      case 'payment':
+        return 'No Payment Cards Found';
+      case 'loyalty':
+        return 'No Loyalty Cards Found';
+      case 'id':
+        return 'No ID Cards Found';
+      case 'ticket':
+        return 'No Tickets Found';
+      case 'gift':
+        return 'No Gift Cards Found';
+      case 'business':
+        return 'No Business Cards Found';
+      default:
+        return 'No Cards Found';
+    }
+  };
+
   // Get message based on selected card type
   const getMessage = () => {
     switch (cardType) {
       case 'payment':
-        return 'Add your credit, debit or prepaid cards to make contactless payments';
+        return 'Add your credit, debit or prepaid cards to make contactless payments anywhere';
       case 'loyalty':
-        return 'Store your loyalty cards in one place and never miss rewards';
+        return 'Store your loyalty and reward cards in one place and never miss rewards again';
       case 'id':
-        return 'Keep your ID cards and memberships in your digital wallet';
+        return 'Keep your ID cards, memberships and identification documents secure';
       case 'ticket':
-        return 'Save your event tickets and passes for easy access';
+        return 'Save your event tickets, boarding passes and digital passes for easy access';
       case 'gift':
-        return 'Store gift cards and track your balances';
+        return 'Store gift cards, vouchers and track your balances in one convenient place';
       case 'business':
-        return 'Manage your business cards and corporate identities';
+        return 'Manage your business cards, corporate IDs and professional identities';
       default:
-        return 'Add your first card to get started with your digital wallet';
+        return 'Add your first card to get started with your secure digital wallet';
     }
   };
 
@@ -67,6 +87,26 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
         return 'briefcase';
       default:
         return 'albums';
+    }
+  };
+
+  // Get dynamic button text based on card type
+  const getButtonText = () => {
+    switch (cardType) {
+      case 'payment':
+        return 'Add Payment Card';
+      case 'loyalty':
+        return 'Add Loyalty Card';
+      case 'id':
+        return 'Add ID Card';
+      case 'ticket':
+        return 'Add Ticket';
+      case 'gift':
+        return 'Add Gift Card';
+      case 'business':
+        return 'Add Business Card';
+      default:
+        return 'Add Your First Card';
     }
   };
 
@@ -133,7 +173,7 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
           </LinearGradient>
         </View>
         
-        <Text style={styles.title}>No Cards Found</Text>
+        <Text style={styles.title}>{getTitle()}</Text>
         <Text style={styles.message}>{getMessage()}</Text>
         
         <TouchableOpacity 
@@ -147,7 +187,7 @@ const EmptyCardState = ({ cardType, onAddCard }) => {
             end={{ x: 1, y: 1 }}
           >
             <Ionicons name="add" size={24} color="#FFF" />
-            <Text style={styles.addButtonText}>Add Your First Card</Text>
+            <Text style={styles.addButtonText}>{getButtonText()}</Text>
           </LinearGradient>
         </TouchableOpacity>
         
