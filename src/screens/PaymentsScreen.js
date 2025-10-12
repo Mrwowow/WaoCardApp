@@ -222,10 +222,7 @@ const PaymentsScreen = () => {
   return (
     <View style={styles.container}>
       {!isConnected && <OfflineNotice />}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Payments</Text>
-      </View>
-      
+     
       <View style={styles.tabContainer}>
         <TouchableOpacity 
           style={[styles.tabButton, activeTab === 'services' && styles.activeTabButton]}

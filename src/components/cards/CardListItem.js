@@ -15,6 +15,34 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40; // 20px padding on each side
 
 const CardListItem = ({ card, onPress }) => {
+  // Utility function to determine if a color is light or dark
+  const isLightColor = (hexColor) => {
+    if (!hexColor) return false;
+    const color = hexColor.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5;
+  };
+
+  // Get appropriate text color based on background
+  const getTextColor = (backgroundColor) => {
+    return isLightColor(backgroundColor) ? '#000000' : '#FFFFFF';
+  };
+
+  // Create a darker shade of a color for gradients
+  const getDarkerShade = (hexColor) => {
+    if (!hexColor) return '#000000';
+    const color = hexColor.replace('#', '');
+    const darkerColor = color
+      .match(/.{1,2}/g)
+      .map(hex => Math.max(0, parseInt(hex, 16) - 40))
+      .map(dec => dec.toString(16).padStart(2, '0'))
+      .join('');
+    return `#${darkerColor}`;
+  };
+
   // Use simplified ID card view for list display
   if (card.type === 'id') {
     return (
@@ -27,6 +55,7 @@ const CardListItem = ({ card, onPress }) => {
       </TouchableOpacity>
     );
   }
+
   // Card type specific properties
   const getCardIcon = () => {
     switch (card.type) {
@@ -49,6 +78,14 @@ const CardListItem = ({ card, onPress }) => {
 
   // Card type specific background gradient
   const getCardGradient = () => {
+    // Check if card has brandData with backgroundColor
+    if (card.brandData && card.brandData.backgroundColor) {
+      const baseColor = card.brandData.backgroundColor;
+      const gradientColor = getDarkerShade(baseColor);
+      return [baseColor, gradientColor];
+    }
+
+    // Fallback to default colors by type
     switch (card.type) {
       case 'payment':
         return ['#0A84FF', '#0066CC'];
@@ -66,6 +103,15 @@ const CardListItem = ({ card, onPress }) => {
         return ['#0A84FF', '#0066CC'];
     }
   };
+
+  // Get dynamic text colors based on background
+  const cardGradient = getCardGradient();
+  const dynamicTextColor = card.brandData && card.brandData.backgroundColor
+    ? getTextColor(card.brandData.backgroundColor)
+    : '#FFFFFF';
+  const dynamicSecondaryColor = dynamicTextColor === '#FFFFFF'
+    ? 'rgba(255, 255, 255, 0.7)'
+    : 'rgba(0, 0, 0, 0.7)';
 
   // Format card number with proper spacing
   const formatCardNumber = (number) => {
@@ -86,7 +132,7 @@ const CardListItem = ({ card, onPress }) => {
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={getCardGradient()}
+        colors={cardGradient}
         style={styles.card}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -94,25 +140,26 @@ const CardListItem = ({ card, onPress }) => {
         {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={styles.issuerContainer}>
-            {card.logo ? (
-              <Image 
-                source={{ uri: card.logo }} 
+            {/* Prioritize brandData.icon, fallback to logo, then default icon */}
+            {(card.brandData && card.brandData.icon) || card.logo ? (
+              <Image
+                source={{ uri: (card.brandData && card.brandData.icon) || card.logo }}
                 style={styles.issuerLogo}
                 resizeMode="contain"
               />
             ) : (
               <View style={styles.issuerPlaceholder}>
-                <Ionicons 
-                  name={getCardIcon()} 
-                  size={16} 
-                  color="#FFF" 
+                <Ionicons
+                  name={getCardIcon()}
+                  size={20}
+                  color={dynamicTextColor}
                 />
               </View>
             )}
-            <Text style={styles.issuerName}>{card.issuer || 'Card'}</Text>
+            <Text style={[styles.issuerName, { color: dynamicTextColor }]}>{card.issuer || 'Card'}</Text>
           </View>
           <View style={styles.typeContainer}>
-            <Text style={styles.typeText}>
+            <Text style={[styles.typeText, { color: dynamicTextColor }]}>
               {card.type.charAt(0).toUpperCase() + card.type.slice(1)}
             </Text>
           </View>
@@ -120,10 +167,10 @@ const CardListItem = ({ card, onPress }) => {
 
         {/* Card Middle Section */}
         <View style={styles.cardMiddle}>
-          <Text style={styles.cardName}>{card.name}</Text>
+          <Text style={[styles.cardName, { color: dynamicTextColor }]}>{card.name}</Text>
           {card.number && (
-            <Text style={styles.cardNumber}>
-              {card.type === 'payment' 
+            <Text style={[styles.cardNumber, { color: dynamicTextColor }]}>
+              {card.type === 'payment'
                 ? '•••• •••• •••• ' + card.number.slice(-4)
                 : formatCardNumber(card.number)}
             </Text>
@@ -135,24 +182,24 @@ const CardListItem = ({ card, onPress }) => {
           {card.type === 'payment' && (
             <>
               <View style={styles.cardInfoItem}>
-                <Text style={styles.cardInfoLabel}>VALID THRU</Text>
-                <Text style={styles.cardInfoValue}>{card.expiry || 'MM/YY'}</Text>
+                <Text style={[styles.cardInfoLabel, { color: dynamicSecondaryColor }]}>VALID THRU</Text>
+                <Text style={[styles.cardInfoValue, { color: dynamicTextColor }]}>{card.expiry || 'MM/YY'}</Text>
               </View>
-              
+
               <View style={styles.cardInfoItem}>
-                <Text style={styles.cardInfoLabel}>HOLDER</Text>
-                <Text style={styles.cardInfoValue}>{card.holderName || 'CARD HOLDER'}</Text>
+                <Text style={[styles.cardInfoLabel, { color: dynamicSecondaryColor }]}>HOLDER</Text>
+                <Text style={[styles.cardInfoValue, { color: dynamicTextColor }]}>{card.holderName || 'CARD HOLDER'}</Text>
               </View>
-              
+
               <View style={styles.cardNetwork}>
                 {card.network === 'visa' && (
-                  <Text style={styles.cardNetworkText}>VISA</Text>
+                  <Text style={[styles.cardNetworkText, { color: dynamicTextColor }]}>VISA</Text>
                 )}
                 {card.network === 'mastercard' && (
-                  <Text style={styles.cardNetworkText}>MasterCard</Text>
+                  <Text style={[styles.cardNetworkText, { color: dynamicTextColor }]}>MasterCard</Text>
                 )}
                 {card.network === 'amex' && (
-                  <Text style={styles.cardNetworkText}>AMEX</Text>
+                  <Text style={[styles.cardNetworkText, { color: dynamicTextColor }]}>AMEX</Text>
                 )}
               </View>
             </>
@@ -161,12 +208,12 @@ const CardListItem = ({ card, onPress }) => {
           {card.type === 'loyalty' && (
             <>
               <View style={styles.pointsContainer}>
-                <Text style={styles.pointsValue}>{card.points || '0'}</Text>
-                <Text style={styles.pointsLabel}>POINTS</Text>
+                <Text style={[styles.pointsValue, { color: dynamicTextColor }]}>{card.points || '0'}</Text>
+                <Text style={[styles.pointsLabel, { color: dynamicSecondaryColor }]}>POINTS</Text>
               </View>
               {card.number && (
                 <View style={styles.qrIndicator}>
-                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                  <Ionicons name="qr-code" size={16} color={dynamicTextColor} />
                 </View>
               )}
             </>
@@ -175,12 +222,12 @@ const CardListItem = ({ card, onPress }) => {
           {card.type === 'ticket' && (
             <>
               <View style={styles.dateContainer}>
-                <Text style={styles.dateLabel}>DATE</Text>
-                <Text style={styles.dateValue}>{card.date || 'DD/MM/YYYY'}</Text>
+                <Text style={[styles.dateLabel, { color: dynamicSecondaryColor }]}>DATE</Text>
+                <Text style={[styles.dateValue, { color: dynamicTextColor }]}>{card.date || 'DD/MM/YYYY'}</Text>
               </View>
               {card.number && (
                 <View style={styles.qrIndicator}>
-                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                  <Ionicons name="qr-code" size={16} color={dynamicTextColor} />
                 </View>
               )}
             </>
@@ -189,12 +236,12 @@ const CardListItem = ({ card, onPress }) => {
           {card.type === 'gift' && (
             <>
               <View style={styles.balanceContainer}>
-                <Text style={styles.balanceLabel}>BALANCE</Text>
-                <Text style={styles.balanceValue}>{card.balance || '$0.00'}</Text>
+                <Text style={[styles.balanceLabel, { color: dynamicSecondaryColor }]}>BALANCE</Text>
+                <Text style={[styles.balanceValue, { color: dynamicTextColor }]}>{card.balance || '$0.00'}</Text>
               </View>
               {card.number && (
                 <View style={styles.qrIndicator}>
-                  <Ionicons name="qr-code" size={16} color="#FFF" />
+                  <Ionicons name="qr-code" size={16} color={dynamicTextColor} />
                 </View>
               )}
             </>
@@ -238,20 +285,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   issuerLogo: {
-    width: 32,
-    height: 24,
-    borderRadius: 4,
-    marginRight: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    marginRight: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 4,
   },
   issuerPlaceholder: {
-    width: 32,
-    height: 24,
-    borderRadius: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   issuerInitial: {
     color: '#FFF',

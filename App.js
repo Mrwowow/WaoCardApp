@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import NavigationService from './src/services/NavigationService';
 import NavigationDebugger from './src/utils/NavigationDebugger';
+import { initializeVtuService } from './src/services/vtuApi';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -37,6 +38,13 @@ function AppContent() {
     async function initializeApp() {
       try {
         console.log('App: Initializing app...');
+        
+        // Initialize VTU.ng service
+        initializeVtuService().then(success => {
+          console.log('App: VTU.ng service initialized:', success ? 'Success' : 'Not configured');
+        }).catch(error => {
+          console.error('App: VTU.ng initialization error:', error);
+        });
         
         // Network check
         const networkState = await NetInfo.fetch();

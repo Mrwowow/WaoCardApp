@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, spacing, borderRadius } from '../../styles/theme';
+import { getProviderIcon } from '../icons/NetworkProviderIcons';
 
-const NetworkProviderSelector = ({ providers, selectedProvider, onSelectProvider }) => {
+const NetworkProviderSelector = ({ providers, selectedProvider, onSelectProvider, compact = false }) => {
   const [loading, setLoading] = useState(false);
   
   // Default providers if API fails
@@ -27,20 +28,7 @@ const NetworkProviderSelector = ({ providers, selectedProvider, onSelectProvider
   const providersToRender = providers?.length > 0 ? providers : defaultProviders;
   
   const renderLogo = (provider) => {
-    if (provider.logo) {
-      return (
-        <Image source={{ uri: provider.logo }} style={styles.providerLogo} />
-      );
-    }
-    
-    // Fallback to colored circle with text
-    return (
-      <View 
-        style={[styles.providerLogoFallback, { backgroundColor: provider.color || colors.primary + '33' }]}
-      >
-        <Text style={styles.providerLogoText}>{provider.name.substring(0, 1)}</Text>
-      </View>
-    );
+    return getProviderIcon(provider.name, 50);
   };
   
   if (loading) {
@@ -62,16 +50,30 @@ const NetworkProviderSelector = ({ providers, selectedProvider, onSelectProvider
         <TouchableOpacity
           key={provider.id}
           style={[
-            styles.providerItem,
-            selectedProvider?.id === provider.id && styles.selectedProviderItem
+            compact ? styles.compactProviderItem : styles.providerItem,
+            selectedProvider?.id === provider.id && (compact ? styles.compactSelectedProviderItem : styles.selectedProviderItem)
           ]}
           onPress={() => onSelectProvider(provider)}
         >
-          {renderLogo(provider)}
-          <Text style={styles.providerName}>{provider.name}</Text>
+          {compact ? (
+            <View style={styles.compactProviderContent}>
+              {getProviderIcon(provider.name, 24)}
+              <Text style={styles.compactProviderName}>{provider.name}</Text>
+            </View>
+          ) : (
+            <>
+              {renderLogo(provider)}
+              <Text style={styles.providerName}>{provider.name}</Text>
+            </>
+          )}
           
           {selectedProvider?.id === provider.id && (
-            <Ionicons name="checkmark-circle" size={18} color={colors.primary} style={styles.checkIcon} />
+            <Ionicons 
+              name="checkmark-circle" 
+              size={compact ? 14 : 18} 
+              color={colors.primary} 
+              style={compact ? styles.compactCheckIcon : styles.checkIcon} 
+            />
           )}
         </TouchableOpacity>
       ))}
@@ -138,6 +140,38 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: fonts.sizes.small,
     marginTop: spacing.s,
+  },
+  compactProviderItem: {
+    height: 60,
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.small,
+    marginRight: spacing.s,
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    minWidth: 80,
+  },
+  compactSelectedProviderItem: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(255, 149, 0, 0.1)',
+  },
+  compactProviderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  compactProviderName: {
+    color: colors.white,
+    fontSize: fonts.sizes.xs,
+    fontFamily: fonts.medium,
+  },
+  compactCheckIcon: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
   },
 });
 

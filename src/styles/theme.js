@@ -22,12 +22,15 @@ export const colors = {
   error: '#FF3B30',
   success: '#30D158',
   warning: '#FFD60A',
-  infoBlue: '#0A84FF'
+  infoBlue: '#0A84FF',
+  black: '#000000',
+  border: 'rgba(255, 255, 255, 0.1)'
 };
 
 export const fonts = {
   regular: 'Inter-Regular',
   medium: 'Inter-Medium',
+  semibold: 'Inter-SemiBold',
   semiBold: 'Inter-SemiBold',
   bold: 'Inter-Bold',
   sizes: {
@@ -47,7 +50,9 @@ export const spacing = {
   xs: 4,
   s: 8,
   m: 16,
+  md: 16,
   l: 24,
+  lg: 24,
   xl: 32,
   xxl: 48,
   xxxl: 64
@@ -56,7 +61,9 @@ export const spacing = {
 export const borderRadius = {
   small: 8,
   medium: 12,
+  md: 12,
   large: 16,
+  lg: 16,
   xl: 20,
   xxl: 28
 };

@@ -17,7 +17,7 @@ export const getBillCategories = async () => {
     return [
       {
         id: 'tv',
-        name: 'TV Subscription',
+        name: 'TV',
         icon: 'tv',
         color: '#FF6B35'
       },

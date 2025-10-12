@@ -253,7 +253,8 @@ const CardsScreen = ({ navigation, route }) => {
   // Add button animation on press
   const animateAddButton = () => {
     console.log("[CardsScreen] animateAddButton called");
-    
+    console.log("[CardsScreen] Current selectedCardType:", selectedCardType);
+
     // Perform the animation
     Animated.sequence([
       Animated.timing(addButtonScale, {
@@ -268,12 +269,23 @@ const CardsScreen = ({ navigation, route }) => {
       }),
     ]).start(() => {
       console.log("[CardsScreen] Animation completed, attempting navigation");
-      
+
       try {
         const filteredCardTypes = cardTypes.filter(type => type.id !== 'all');
+
+        // If user has filtered to a specific card type, skip card type selection
+        const shouldSkip = selectedCardType !== 'all';
+        const preSelectedType = shouldSkip ? selectedCardType : 'payment';
+
         console.log("[CardsScreen] Navigating to AddCard screen");
+        console.log("[CardsScreen] shouldSkip:", shouldSkip, "preSelectedType:", preSelectedType);
+
         // AddCard is at the root level of the MainNavigator
-        navigation.navigate('AddCard', { cardTypes: filteredCardTypes });
+        navigation.navigate('AddCard', {
+          cardTypes: filteredCardTypes,
+          preSelectedCardType: preSelectedType,
+          skipCardTypeSelection: shouldSkip
+        });
       } catch (error) {
         console.error("[CardsScreen] Navigation error:", error);
         Alert.alert(
@@ -422,23 +434,12 @@ const CardsScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Card Type Filters - Only show for list view */}
-        {viewMode === 'list' && (
-          <CardTypeFilter
-            cardTypes={cardTypes}
-            selectedType={selectedCardType}
-            onSelectType={setSelectedCardType}
-          />
-        )}
-
-        {/* Stack view filter indicator */}
-        {viewMode === 'stack' && selectedCardType !== 'all' && (
-          <View style={styles.stackFilterIndicator}>
-            <Text style={styles.stackFilterText}>
-              {cardTypes.find(type => type.id === selectedCardType)?.name || 'All Cards'}
-            </Text>
-          </View>
-        )}
+        {/* Card Type Filters - Show for both views */}
+        <CardTypeFilter
+          cardTypes={cardTypes}
+          selectedType={selectedCardType}
+          onSelectType={setSelectedCardType}
+        />
 
         {/* Cards Display */}
         <View style={viewMode === 'stack' ? styles.stackViewContainer : styles.listViewContainer}>
@@ -470,6 +471,8 @@ const CardsScreen = ({ navigation, route }) => {
                   cards={filteredCards}
                   onCardPress={handleCardPress}
                   selectedCardType={selectedCardType}
+                  onRefresh={handleRefresh}
+                  refreshing={isRefreshing}
                 />
               );
             } else {
@@ -574,20 +577,6 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  stackFilterIndicator: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 5, // Reduced from 10 to bring filter closer to cards
-    marginTop: 5, // Small top margin for spacing from header
-  },
-  stackFilterText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   stackViewContainer: {
     flex: 1,

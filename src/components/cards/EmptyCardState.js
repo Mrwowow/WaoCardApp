@@ -110,20 +110,21 @@ const EmptyCardState = React.memo(({ cardType, onAddCard }) => {
     }
   };
 
-  // Button press handler 
+  // Button press handler
   const handleAddCardPress = () => {
     console.log(`[EmptyCardState] Add ${cardType} card button pressed`);
-    
-    // 1. First, try using the provided callback with specific card type
+    console.log(`[EmptyCardState] Current cardType: ${cardType}`);
+
+    // Use the provided callback - the parent (CardsScreen) handles navigation with correct params
     if (onAddCard && typeof onAddCard === 'function') {
       console.log("[EmptyCardState] Using provided onAddCard callback");
       onAddCard();
       return;
     }
-    
-    // 2. Navigate directly to AddCard with pre-selected card type
-    console.log(`[EmptyCardState] Navigating directly to AddCard with cardType: ${cardType}`);
-    
+
+    // Fallback: Navigate directly to AddCard with pre-selected card type
+    console.log(`[EmptyCardState] No callback provided, navigating directly`);
+
     // Get card types data for reference
     const cardTypeData = [
       { id: 'payment', name: 'Payment', icon: 'card-outline' },
@@ -133,34 +134,26 @@ const EmptyCardState = React.memo(({ cardType, onAddCard }) => {
       { id: 'gift', name: 'Gift Cards', icon: 'gift-outline' },
       { id: 'business', name: 'Business', icon: 'briefcase-outline' },
     ];
-    
+
     // Navigation parameters to skip card type selection and go directly to form
+    const shouldSkip = cardType !== 'all';
     const navigationParams = {
       cardTypes: cardTypeData,
-      preSelectedCardType: cardType !== 'all' ? cardType : 'payment', // Skip to specific type or default to payment
-      skipCardTypeSelection: cardType !== 'all' // Skip selection if we have a specific type
+      preSelectedCardType: shouldSkip ? cardType : 'payment',
+      skipCardTypeSelection: shouldSkip
     };
-    
+
     console.log(`[EmptyCardState] Navigation params:`, navigationParams);
-    
+
     try {
-      // Use direct navigation with the new parameters
       navigation.navigate('AddCard', navigationParams);
-      console.log(`[EmptyCardState] Successfully navigated to AddCard with preSelectedCardType: ${navigationParams.preSelectedCardType}`);
+      console.log(`[EmptyCardState] Successfully navigated to AddCard`);
     } catch (error) {
       console.error("[EmptyCardState] Navigation error:", error);
-      
-      // Fallback navigation without special parameters
-      try {
-        console.log("[EmptyCardState] Using fallback navigation");
-        navigation.navigate('AddCard', { cardTypes: cardTypeData });
-      } catch (navError) {
-        console.error("[EmptyCardState] All navigation attempts failed:", navError);
-        Alert.alert(
-          "Navigation Error",
-          "Could not navigate to Add Card screen. Please try again."
-        );
-      }
+      Alert.alert(
+        "Navigation Error",
+        "Could not navigate to Add Card screen. Please try again."
+      );
     }
   };
 

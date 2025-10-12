@@ -13,23 +13,49 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
 
 const IDCardListItem = ({ card }) => {
-  // Get gradient colors based on the card's background color
+  // Utility function to determine if a color is light or dark
+  const isLightColor = (hexColor) => {
+    if (!hexColor) return false;
+    const color = hexColor.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5;
+  };
+
+  // Get appropriate text color based on background
+  const getTextColor = (backgroundColor) => {
+    return isLightColor(backgroundColor) ? '#000000' : '#FFFFFF';
+  };
+
+  // Get gradient colors based on brandData or card's background color
   const getGradientColors = () => {
-    const baseColor = card.backgroundColor || '#5856D6';
-    
+    // Prioritize brandData backgroundColor
+    const baseColor = (card.brandData && card.brandData.backgroundColor) || card.backgroundColor || '#5856D6';
+
     // Create a darker variant for gradient
     const darkerColor = baseColor.replace('#', '')
       .match(/.{1,2}/g)
       .map(hex => Math.max(0, parseInt(hex, 16) - 40))
       .map(dec => dec.toString(16).padStart(2, '0'))
       .join('');
-    
+
     return [baseColor, `#${darkerColor}`];
   };
 
+  // Get dynamic text colors
+  const gradientColors = getGradientColors();
+  const baseColor = gradientColors[0];
+  const dynamicTextColor = getTextColor(baseColor);
+  const dynamicSecondaryColor = dynamicTextColor === '#FFFFFF'
+    ? 'rgba(255, 255, 255, 0.7)'
+    : 'rgba(0, 0, 0, 0.7)';
+  const dynamicAccentColor = dynamicTextColor === '#FFFFFF' ? '#FFD700' : '#DAA520';
+
   return (
     <LinearGradient
-      colors={getGradientColors()}
+      colors={gradientColors}
       style={styles.card}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -37,45 +63,50 @@ const IDCardListItem = ({ card }) => {
       {/* Card Header with Issuer */}
       <View style={styles.cardHeader}>
         <View style={styles.issuerContainer}>
-          {card.logo ? (
-            <Image source={{ uri: card.logo }} style={styles.issuerLogo} />
+          {/* Prioritize brandData.icon, fallback to logo, then default icon */}
+          {(card.brandData && card.brandData.icon) || card.logo ? (
+            <Image
+              source={{ uri: (card.brandData && card.brandData.icon) || card.logo }}
+              style={styles.issuerLogo}
+              resizeMode="contain"
+            />
           ) : (
             <View style={styles.issuerPlaceholder}>
-              <Ionicons name="school" size={16} color="#FFD700" />
+              <Ionicons name="school" size={20} color={dynamicAccentColor} />
             </View>
           )}
-          <Text style={styles.issuerName}>{card.issuer || 'Institution'}</Text>
+          <Text style={[styles.issuerName, { color: dynamicTextColor }]}>{card.issuer || 'Institution'}</Text>
         </View>
         <View style={styles.typeContainer}>
-          <Ionicons name="id-card-outline" size={16} color="#FFF" />
-          <Text style={styles.typeText}>ID</Text>
+          <Ionicons name="id-card-outline" size={16} color={dynamicTextColor} />
+          <Text style={[styles.typeText, { color: dynamicTextColor }]}>ID</Text>
         </View>
       </View>
 
       {/* Card Name/Title */}
       <View style={styles.cardMiddle}>
-        <Text style={styles.cardName}>{card.name}</Text>
+        <Text style={[styles.cardName, { color: dynamicTextColor }]}>{card.name}</Text>
         {card.role && (
-          <Text style={styles.cardRole}>{card.role}</Text>
+          <Text style={[styles.cardRole, { color: dynamicSecondaryColor }]}>{card.role}</Text>
         )}
       </View>
 
       {/* Cardholder Name */}
       <View style={styles.cardFooter}>
         <View style={styles.cardInfoItem}>
-          <Text style={styles.cardInfoLabel}>CARDHOLDER</Text>
-          <Text style={styles.cardInfoValue} numberOfLines={1}>
+          <Text style={[styles.cardInfoLabel, { color: dynamicSecondaryColor }]}>CARDHOLDER</Text>
+          <Text style={[styles.cardInfoValue, { color: dynamicTextColor }]} numberOfLines={1}>
             {card.holderName || 'Card Holder'}
           </Text>
         </View>
-        
+
         {/* ID Number - last part only */}
         {card.number && (
           <View style={styles.idContainer}>
-            <Text style={styles.idLabel}>ID</Text>
-            <Text style={styles.idValue}>
-              {card.number.length > 6 
-                ? '•••' + card.number.slice(-3) 
+            <Text style={[styles.idLabel, { color: dynamicSecondaryColor }]}>ID</Text>
+            <Text style={[styles.idValue, { color: dynamicAccentColor }]}>
+              {card.number.length > 6
+                ? '•••' + card.number.slice(-3)
                 : card.number}
             </Text>
           </View>
@@ -107,20 +138,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   issuerLogo: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 4,
   },
   issuerPlaceholder: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 215, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   issuerName: {
     color: '#FFD700',

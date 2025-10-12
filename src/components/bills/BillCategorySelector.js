@@ -14,7 +14,7 @@ import { colors, fonts, spacing, borderRadius } from '../../styles/theme';
 const BillCategorySelector = ({ categories, selectedCategory, onSelectCategory }) => {
   // Default categories if API fails
   const defaultCategories = [
-    { id: '1', name: 'TV Subscription', icon: 'tv', color: '#FF9500' },
+    { id: '1', name: 'TV', icon: 'tv', color: '#FF9500' },
     { id: '2', name: 'Electricity', icon: 'flash', color: '#FF2D55' },
     { id: '3', name: 'Internet', icon: 'wifi', color: '#5AC8FA' },
     { id: '4', name: 'Water', icon: 'water', color: '#007AFF' },

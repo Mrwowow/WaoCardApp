@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  ScrollView,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Dimensions,
@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useNotification } from '../context/NotificationContext';
 import useConfirmation from '../hooks/useConfirmation';
+import BrandAutocomplete from '../components/BrandAutocomplete';
 
 import { Camera } from 'expo-camera';
 
@@ -52,6 +53,7 @@ const AddCardScreen = ({ navigation, route }) => {
   const [cardIssuer, setCardIssuer] = useState(editCard?.issuer || '');
   const [cardLogo, setCardLogo] = useState(editCard?.logo || null);
   const [cardNetwork, setCardNetwork] = useState(editCard?.network || '');
+  const [brandData, setBrandData] = useState(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(editCard?.points || '');
   const [giftCardBalance, setGiftCardBalance] = useState(editCard?.balance || '');
   const [eventDate, setEventDate] = useState(editCard?.date || '');
@@ -90,6 +92,25 @@ const AddCardScreen = ({ navigation, route }) => {
       })();
     }
   }, [isCameraVisible]);
+  
+  // Handle brand selection from autocomplete
+  const handleBrandSelected = (selectedBrand) => {
+    console.log('Brand selected:', selectedBrand);
+    setBrandData(selectedBrand);
+
+    // Prioritize icon over logo for better quality
+    // Icon is typically higher quality and more recognizable
+    if (selectedBrand.icon) {
+      setCardLogo(selectedBrand.icon);
+    } else if (selectedBrand.logo) {
+      setCardLogo(selectedBrand.logo);
+    }
+
+    // Update background color if available
+    if (selectedBrand.backgroundColor) {
+      setBackgroundColor(selectedBrand.backgroundColor);
+    }
+  };
   
   // Handle back/close with confirmation
   const handleClose = async () => {
@@ -166,6 +187,7 @@ const AddCardScreen = ({ navigation, route }) => {
                 name: cardName,
                 issuer: cardIssuer,
                 logo: cardLogo,
+                brandData: brandData, // Include the fetched brand data
             };
 
             // If editing, preserve the original ID and creation time
@@ -470,11 +492,13 @@ const AddCardScreen = ({ navigation, route }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Select Card Type</Text>
       <Text style={styles.stepDescription}>Choose the type of card you want to add</Text>
-      
-      <ScrollView style={styles.cardTypeList}>
-        {cardTypes.map((type) => (
+
+      <FlatList
+        style={styles.cardTypeList}
+        data={cardTypes}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item: type }) => (
           <TouchableOpacity
-            key={type.id}
             style={[
               styles.cardTypeItem,
               cardType === type.id && styles.cardTypeItemSelected
@@ -482,10 +506,10 @@ const AddCardScreen = ({ navigation, route }) => {
             onPress={() => handleCardTypeSelect(type.id)}
           >
             <View style={styles.cardTypeIcon}>
-              <Ionicons 
-                name={type.icon} 
-                size={24} 
-                color={cardType === type.id ? '#FF9500' : '#FFF'} 
+              <Ionicons
+                name={type.icon}
+                size={24}
+                color={cardType === type.id ? '#FF9500' : '#FFF'}
               />
             </View>
             <View style={styles.cardTypeTextContainer}>
@@ -498,8 +522,10 @@ const AddCardScreen = ({ navigation, route }) => {
               <Ionicons name="checkmark-circle" size={24} color="#FF9500" />
             )}
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        )}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 10 }}
+      />
       
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
@@ -519,13 +545,20 @@ const AddCardScreen = ({ navigation, route }) => {
     </View>
   );
   
-  // Render Step 2: Card Details Form
-  const renderStepTwo = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Add Card Details</Text>
-      <Text style={styles.stepDescription}>Enter the information for your {getCardTypeName(cardType)}</Text>
-      
-      <ScrollView style={styles.formContainer}>
+  // Render form fields content
+  const renderFormFields = () => (
+    <View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Card Issuer</Text>
+          <BrandAutocomplete
+            value={cardIssuer}
+            onChangeText={setCardIssuer}
+            onBrandSelected={handleBrandSelected}
+            placeholder="e.g., Chase, Target, Starbucks"
+            style={styles.brandAutocomplete}
+          />
+        </View>
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Card Name (Required)</Text>
           <TextInput
@@ -534,17 +567,6 @@ const AddCardScreen = ({ navigation, route }) => {
             placeholderTextColor="rgba(255,255,255,0.5)"
             value={cardName}
             onChangeText={setCardName}
-          />
-        </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Card Issuer</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., Chase, Target, Starbucks"
-            placeholderTextColor="rgba(255,255,255,0.5)"
-            value={cardIssuer}
-            onChangeText={setCardIssuer}
           />
         </View>
         
@@ -939,23 +961,38 @@ const AddCardScreen = ({ navigation, route }) => {
             )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
-      
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.cancelButton} onPress={handlePrevStep}>
-          <Text style={styles.cancelButtonText}>Back</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
-          <LinearGradient
-            colors={['#FF9500', '#E08600']}
-            style={styles.nextButtonGradient}
-          >
-            <Text style={styles.nextButtonText}>{isEditMode ? 'Update Card' : 'Add Card'}</Text>
-            <Ionicons name={isEditMode ? "checkmark" : "card"} size={20} color="#FFF" />
-          </LinearGradient>
-        </TouchableOpacity>
       </View>
+  );
+
+  // Render Step 2: Card Details Form
+  const renderStepTwo = () => (
+    <View style={styles.stepContainer}>
+     
+      <FlatList
+        data={[{ key: 'form' }]}
+        renderItem={() => renderFormFields()}
+        keyExtractor={(item) => item.key}
+        style={styles.formContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListFooterComponent={() => (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.cancelButton} onPress={handlePrevStep}>
+              <Text style={styles.cancelButtonText}>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
+              <LinearGradient
+                colors={['#FF9500', '#E08600']}
+                style={styles.nextButtonGradient}
+              >
+                <Text style={styles.nextButtonText}>{isEditMode ? 'Update Card' : 'Add Card'}</Text>
+                <Ionicons name={isEditMode ? "checkmark" : "card"} size={20} color="#FFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </View>
   );
   
@@ -1505,6 +1542,9 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  brandAutocomplete: {
+    zIndex: 1000,
   },
 });
 

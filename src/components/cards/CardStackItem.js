@@ -11,8 +11,69 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const CardStackItem = ({ card, isSelected, isExpanded, onPress }) => {
+  // Utility function to determine if a color is light or dark
+  const isLightColor = (hexColor) => {
+    if (!hexColor) return false;
+
+    // Remove # if present
+    const color = hexColor.replace('#', '');
+
+    // Convert to RGB
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Return true if light (luminance > 0.5)
+    return luminance > 0.5;
+  };
+
+  // Get appropriate text color based on background
+  const getTextColor = (backgroundColor) => {
+    return isLightColor(backgroundColor) ? '#000000' : '#FFFFFF';
+  };
+
+  // Create a darker shade of a color for gradients
+  const getDarkerShade = (hexColor) => {
+    if (!hexColor) return '#000000';
+
+    const color = hexColor.replace('#', '');
+    const darkerColor = color
+      .match(/.{1,2}/g)
+      .map(hex => Math.max(0, parseInt(hex, 16) - 40))
+      .map(dec => dec.toString(16).padStart(2, '0'))
+      .join('');
+
+    return `#${darkerColor}`;
+  };
   // Get card type colors and gradients
   const getCardColors = (type) => {
+    // Check if card has brandData with backgroundColor
+    let baseColor;
+    let gradientColor;
+    let textColor;
+    let secondaryColor;
+
+    if (card.brandData && card.brandData.backgroundColor) {
+      // Use brand colors from BrandFetch
+      baseColor = card.brandData.backgroundColor;
+      gradientColor = getDarkerShade(baseColor);
+      textColor = getTextColor(baseColor);
+      // Secondary color is a lighter/darker version depending on text color
+      secondaryColor = textColor === '#FFFFFF'
+        ? 'rgba(255, 255, 255, 0.7)'
+        : 'rgba(0, 0, 0, 0.7)';
+
+      return {
+        colors: [baseColor, gradientColor],
+        textColor: textColor,
+        secondaryColor: secondaryColor,
+      };
+    }
+
+    // Fallback to default colors by type if no brandData
     switch (type) {
       case 'payment':
         return {
@@ -35,15 +96,12 @@ const CardStackItem = ({ card, isSelected, isExpanded, onPress }) => {
       case 'id':
         // Use the card's custom background color if available
         const bgColor = card.backgroundColor || '#5856D6';
-        const darkerColor = bgColor.replace('#', '')
-          .match(/.{1,2}/g)
-          .map(hex => Math.max(0, parseInt(hex, 16) - 40))
-          .map(dec => dec.toString(16).padStart(2, '0'))
-          .join('');
+        const darkerColor = getDarkerShade(bgColor);
+        const idTextColor = getTextColor(bgColor);
         return {
-          colors: [bgColor, `#${darkerColor}`],
-          textColor: '#FFFFFF',
-          secondaryColor: '#FFD700', // Gold for ID cards
+          colors: [bgColor, darkerColor],
+          textColor: idTextColor,
+          secondaryColor: idTextColor === '#FFFFFF' ? '#FFD700' : '#DAA520',
         };
       case 'ticket':
         return {
@@ -103,9 +161,10 @@ const CardStackItem = ({ card, isSelected, isExpanded, onPress }) => {
         {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={styles.cardTypeContainer}>
-            {card.logo ? (
+            {/* Prioritize brandData.icon, fallback to logo, then default icon */}
+            {(card.brandData && card.brandData.icon) || card.logo ? (
               <Image
-                source={{ uri: card.logo }}
+                source={{ uri: (card.brandData && card.brandData.icon) || card.logo }}
                 style={styles.cardLogo}
                 resizeMode="contain"
               />
@@ -195,20 +254,9 @@ const CardStackItem = ({ card, isSelected, isExpanded, onPress }) => {
         </View>
 
         {/* Selection indicator */}
-        {isSelected && isExpanded && (
+        {isSelected && (
           <View style={styles.selectionIndicator}>
             <View style={styles.selectionDot} />
-          </View>
-        )}
-
-        {/* Tap hint for collapsed stack */}
-        {!isExpanded && (
-          <View style={styles.tapHint}>
-            <Ionicons
-              name="chevron-up-outline"
-              size={16}
-              color={cardColors.secondaryColor}
-            />
           </View>
         )}
       </LinearGradient>
@@ -247,10 +295,11 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   cardLogo: {
-    width: 28,
-    height: 20,
+    width: 32,
+    height: 32,
     borderRadius: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 4,
   },
   menuDots: {
     flexDirection: 'row',

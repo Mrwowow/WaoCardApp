@@ -358,10 +358,15 @@ const CardDetailsModal = ({ visible, card, onClose, onDelete, navigation }) => {
               {/* Dynamic Card Fields */}
               {Object.entries(card).map(([key, value]) => {
                 // Skip fields that are not card data or already shown
-                if (['id', 'type', 'name', 'issuer', 'logo', 'createdAt'].includes(key) || !value) {
+                // Also skip objects like brandData and arrays
+                if (
+                  ['id', 'type', 'name', 'issuer', 'logo', 'createdAt', 'brandData', 'updatedAt'].includes(key) ||
+                  !value ||
+                  typeof value === 'object'
+                ) {
                   return null;
                 }
-                
+
                 return (
                   <View key={key} style={styles.detailRow}>
                     <Text style={styles.detailLabel}>{getFieldLabel(key)}</Text>
