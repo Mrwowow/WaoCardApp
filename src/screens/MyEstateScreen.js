@@ -49,7 +49,7 @@ const MyEstateScreen = () => {
   
   // API Endpoints
   const BASE_URL = 'https://estate.waocard.co/api';
-  const APP_URL = 'https://waocard.co/app/api';
+  const APP_URL = 'https://www.waobiz.app/api';
   const ESTATE_INFO_ENDPOINT = `${BASE_URL}/fetch_estate_info.php`;
   
   // Initialize notification and confirmation hooks
@@ -2221,7 +2221,7 @@ const MyEstateScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: 'rgb(255, 248, 240)',
   },
   loadingContainer: {
     flex: 1,

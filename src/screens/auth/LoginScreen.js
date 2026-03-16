@@ -372,26 +372,22 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
       }
       
       // Regular authentication flow for non-demo users
-      const myHeaders = new Headers();
-      myHeaders.append("Cookie", "_us=1744552840; ad-con=%7B%26quot%3Bdate%26quot%3B%3A%26quot%3B2025-04-12%26quot%3B%2C%26quot%3Bads%26quot%3B%3A%5B%5D%7D; PHPSESSID=1pjujq451m8ol33eelm0is4ck9; mode=day");
-      
-      const formdata = new FormData();
-      formdata.append("server_key", "105b1bb6bb635934dc758a8831a201ac");
-      formdata.append("username", user);
-      formdata.append("password", pass);
-      formdata.append("device_type", "phone");
-      
-      const requestOptions = {
+      const response = await fetch("https://www.waobiz.app/api/waocard/auth", {
         method: "POST",
-        headers: myHeaders,
-        body: formdata,
-        redirect: "follow"
-      };
-      
-      const response = await fetch("https://waocard.co/app/api/auth", requestOptions);
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: "login",
+          mobile: user,
+          password: pass,
+        }),
+      });
+
       const result = await response.json();
-      
-      if (result.api_status === 200) {
+
+      if (result.access_token) {
         try {
           // If this was a manual login, check if we should offer to enable biometric auth
           if (!fromBiometric && biometricsAvailable) {
@@ -439,13 +435,40 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
           
           // First, store the token in AsyncStorage
           await AsyncStorage.setItem('waocard_token', result.access_token);
-          await AsyncStorage.setItem('waocard_user_id', result.user_id.toString());
-          
-          // Update auth context with token
+          if (result.contact?.id) {
+            await AsyncStorage.setItem('waocard_user_id', result.contact.id.toString());
+          }
+
+          // Build user data from the login response contact object
+          const contact = result.contact || {};
+          const loginUserData = {
+            id: contact.id ? contact.id.toString() : '0',
+            username: contact.mobile || user,
+            first_name: contact.first_name || '',
+            last_name: contact.last_name || '',
+            name: contact.name || '',
+            email: contact.email || '',
+            mobile: contact.mobile || user,
+            wallet: contact.balance || '0.00',
+            balance: contact.balance || '0.00',
+            contact_status: contact.contact_status || '',
+            business_name: contact.business_name || '',
+            total_rp: contact.total_rp || 0,
+            credit_limit: contact.credit_limit || '0',
+            address_line_1: contact.address_line_1 || '',
+            city: contact.city || '',
+            state: contact.state || '',
+            country: contact.country || '',
+          };
+
+          // Store user data before signIn so it's available immediately
+          await AsyncStorage.setItem('waocard_user_data', JSON.stringify(loginUserData));
+
+          // Update auth context with token (token-only sign in)
           await signIn(result.access_token);
-          
-          // Fetch additional user data
-          await fetchUserData(result.access_token, user);
+
+          // Load the stored user data into context
+          await fetchUserData(result.access_token, contact.mobile || user);
           
           // Show success notification
           showNotification('Login successful!', 'success');
@@ -481,7 +504,7 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
         }
       } else {
         // Show error notification for API errors
-        showNotification(result.errors?.error_text || 'Login failed', 'error');
+        showNotification(result.message || result.errors?.error_text || 'Login failed', 'error');
       }
     } catch (error) {
       // Show error notification for network errors
@@ -498,7 +521,7 @@ const LoginScreen = ({ navigation, onAuthenticated }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       
       {/* Notification Toast */}
       <NotificationToast
@@ -729,7 +752,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   dividerText: {
     color: colors.textSecondary,

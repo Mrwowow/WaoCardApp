@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   customerInfoContainer: {
     marginTop: spacing.m,
     marginBottom: spacing.m,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
     padding: spacing.m,
     borderRadius: borderRadius.small,
     borderLeftWidth: 2,

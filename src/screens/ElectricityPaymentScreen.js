@@ -313,7 +313,7 @@ const ElectricityPaymentScreen = ({ navigation }) => {
                 disabled={!selectedProvider || !meterNumber || isVerifying}
               >
                 {isVerifying ? (
-                  <ActivityIndicator size="small" color={colors.white} />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <Text style={styles.verifyButtonText}>Verify</Text>
                 )}
@@ -393,10 +393,10 @@ const ElectricityPaymentScreen = ({ navigation }) => {
                 style={styles.payButtonGradient}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.white} />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <>
-                    <Ionicons name="flash" size={20} color={colors.white} />
+                    <Ionicons name="flash" size={20} color="#FFF" />
                     <Text style={styles.payButtonText}>Pay Electricity Bill</Text>
                   </>
                 )}
@@ -495,7 +495,7 @@ const styles = {
     color: colors.textSecondary,
   },
   meterTypeTextSelected: {
-    color: colors.white,
+    color: '#FFF',
     fontWeight: '600',
   },
   inputRow: {
@@ -530,7 +530,7 @@ const styles = {
     opacity: 0.5,
   },
   verifyButtonText: {
-    color: colors.white,
+    color: '#FFF',
     fontSize: fonts.sizes.medium,
     fontWeight: '600',
   },
@@ -618,7 +618,7 @@ const styles = {
     paddingHorizontal: spacing.l,
   },
   payButtonText: {
-    color: colors.white,
+    color: '#FFF',
     fontSize: fonts.sizes.medium,
     fontWeight: '600',
     marginLeft: spacing.s,

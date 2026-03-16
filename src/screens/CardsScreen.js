@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   StatusBar,
   FlatList,
-  ImageBackground,
+
   StyleSheet,
   Dimensions,
   Animated,
@@ -376,13 +376,8 @@ const CardsScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="rgb(255, 248, 240)" />
 
-      <ImageBackground
-        source={require('../../assets/images/gradient-bg.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
         {/* Animated Header */}
         <Animated.View style={[
           styles.headerBackground,
@@ -509,7 +504,6 @@ const CardsScreen = ({ navigation, route }) => {
             navigation={navigation}
           />
         )}
-      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -517,7 +511,7 @@ const CardsScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'rgb(255, 248, 240)',
   },
   backgroundImage: {
     flex: 1,
@@ -533,7 +527,7 @@ const styles = StyleSheet.create({
   },
   headerBlur: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(255, 248, 240, 0.9)',
   },
   header: {
     flexDirection: 'row',
@@ -546,7 +540,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
   },
   headerActions: {
     flexDirection: 'row',
@@ -556,7 +550,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -596,7 +590,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#FFF',
+    color: '#555',
     marginTop: 15,
     fontSize: 16,
   },

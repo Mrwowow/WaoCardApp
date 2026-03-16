@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.l,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   headerTitle: {
     color: colors.white,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: spacing.l,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   tabButton: {
     paddingVertical: spacing.m,

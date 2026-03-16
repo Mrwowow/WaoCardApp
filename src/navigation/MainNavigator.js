@@ -21,6 +21,7 @@ import AirtimeScreen from '../screens/AirtimeScreen';
 import BillsPaymentScreen from '../screens/BillsPaymentScreen';
 import MyEstateScreen from '../screens/MyEstateScreen';
 import DataPurchaseScreen from '../screens/DataPurchaseScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 import { colors, fonts } from '../styles/theme';
 
@@ -34,7 +35,7 @@ const CardsNavigator = () => {
     <Stack.Navigator 
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: '#000' },
+        cardStyle: { backgroundColor: 'rgb(255, 248, 240)' },
       }}
     >
       <Stack.Screen name="CardsList" component={CardsScreen} />
@@ -54,7 +55,7 @@ const MapNavigator = ({ initialLocation, offlineMode }) => {
           shadowOpacity: 0,
           borderBottomWidth: 0,
         },
-        headerTintColor: colors.primary,
+        headerTintColor: '#000',
         headerTitleStyle: {
           fontFamily: fonts.semiBold,
         },
@@ -115,11 +116,6 @@ const NetworkScreen = () => (
   </View>
 );
 
-const AnalyticsScreen = () => (
-  <View style={styles.screenContainer}>
-    <Text style={styles.screenText}>Analytics Screen</Text>
-  </View>
-);
 
 // Main Tab Navigator
 const TabNavigator = ({ initialLocation, offlineMode }) => {
@@ -186,13 +182,13 @@ const TabNavigator = ({ initialLocation, offlineMode }) => {
         }}
       />
       <Tab.Screen
-        name="Analytics"
-        component={AnalyticsScreen}
+        name="Settings"
+        component={SettingsScreen}
         options={{
           tabBarIcon: ({ color, size, focused }) => (
              <View style={styles.tabItem}>
-                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={size} color={color} />
-                <Text style={[styles.tabLabel, { color: color }]}>Analytics</Text>
+                <Ionicons name={focused ? "settings" : "settings-outline"} size={size} color={color} />
+                <Text style={[styles.tabLabel, { color: color }]}>Settings</Text>
              </View>
           ),
         }}
@@ -246,7 +242,7 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
             shadowOpacity: 0,
             borderBottomWidth: 0,
           },
-          headerTintColor: colors.primary,
+          headerTintColor: '#000',
           headerTitleStyle: {
             fontFamily: fonts.semiBold,
           },
@@ -265,7 +261,7 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
             shadowOpacity: 0,
             borderBottomWidth: 0,
           },
-          headerTintColor: colors.primary,
+          headerTintColor: '#000',
           headerTitleStyle: {
             fontFamily: fonts.semiBold,
           },
@@ -284,7 +280,7 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
             shadowOpacity: 0,
             borderBottomWidth: 0,
           },
-          headerTintColor: colors.primary,
+          headerTintColor: '#000',
           headerTitleStyle: {
             fontFamily: fonts.semiBold,
           },
@@ -314,7 +310,7 @@ const MainNavigator = ({ initialLocation, offlineMode }) => {
 const styles = StyleSheet.create({
   tabBarStyle: {
     position: 'absolute',
-    backgroundColor: colors.background,
+    backgroundColor: '#000',
     borderTopWidth: 0,
     borderTopColor: 'rgba(255, 149, 0, 0.2)',
     elevation: 0,
@@ -345,7 +341,7 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     borderRadius: 15,
-    backgroundColor: colors.background,
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,

@@ -5,7 +5,7 @@ const { width, height } = Dimensions.get('window');
 export default {
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'rgb(255, 248, 240)',
   },
   backgroundImage: {
     flex: 1,
@@ -22,16 +22,16 @@ export default {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginLeft: 15,
   },
   scrollContent: {
@@ -58,11 +58,11 @@ export default {
   
   // Profile Card
   profileCard: {
-    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    backgroundColor: '#FFF',
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
     padding: 20,
   },
   userInfoRow: {
@@ -116,13 +116,13 @@ export default {
   userName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 5,
     textTransform: 'uppercase', // Make the name all caps as shown in screenshot
   },
   userUsername: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.5)',
     marginBottom: 8,
   },
   editProfileButton: {
@@ -149,7 +149,7 @@ export default {
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: 'rgba(0, 0, 0, 0.08)',
   },
   statItem: {
     alignItems: 'center',
@@ -157,12 +157,12 @@ export default {
   statValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 5,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.5)',
   },
   
   // Updated badge styles to be in a horizontal row
@@ -253,11 +253,9 @@ export default {
     marginBottom: 20,
   },
   walletCard: {
-    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
     padding: 20,
   },
   walletHeader: {
@@ -299,24 +297,24 @@ export default {
   },
   walletActionText: {
     fontSize: 12,
-    color: '#FFF',
+    color: '#FFF',  // White text on dark wallet card
   },
   
   // Settings Section
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 15,
     marginHorizontal: 20,
     marginTop: 20,
   },
   settingsCard: {
-    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    backgroundColor: '#FFF',
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
     marginHorizontal: 20,
     marginBottom: 15,
   },
@@ -325,7 +323,7 @@ export default {
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.06)',
   },
   settingIconContainer: {
     width: 40,
@@ -342,12 +340,12 @@ export default {
   settingTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(0, 0, 0, 0.4)',
   },
   settingArrow: {
     marginLeft: 10,

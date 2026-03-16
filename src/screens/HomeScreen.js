@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-  ImageBackground,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -81,11 +80,11 @@ const HomeScreen = ({ navigation }) => {
 
   // Refresh user data function for pull-to-refresh
   const onRefresh = async () => {
-    if (!userToken || !userData?.username) return;
-    
+    if (!userToken || !(userData?.mobile || userData?.username)) return;
+
     setRefreshing(true);
     try {
-      await fetchUserData(userToken, userData.username);
+      await fetchUserData(userToken, userData.mobile || userData.username);
     } catch (error) {
       console.error('Error refreshing user data:', error);
     } finally {
@@ -95,7 +94,7 @@ const HomeScreen = ({ navigation }) => {
 
   // Load user data on initial mount
   useEffect(() => {
-    if (userToken && userData && userData.username) {
+    if (userToken && userData && (userData.mobile || userData.username)) {
       // Initial data load if needed
       // No need to call fetchUserData here if it's already fetched during login
     }
@@ -184,7 +183,7 @@ const HomeScreen = ({ navigation }) => {
             category.id === 'transport' ? 'bus-outline' : 'fast-food-outline'
           }
           size={20}
-          color={isActive ? '#000' : '#fff'}
+          color={isActive ? '#000' : '#333'}
         />
         <Text style={[styles.merchantCategoryText, isActive && styles.activeMerchantCategoryText]}>{category.name}</Text>
       </TouchableOpacity>
@@ -257,13 +256,8 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="rgb(255, 248, 240)" />
 
-      <ImageBackground
-        source={require('../../assets/images/gradient-bg.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
         {/* Header with user info from context */}
         <View style={styles.header}>
           
@@ -273,9 +267,9 @@ const HomeScreen = ({ navigation }) => {
               activeOpacity={0.7}
               onPress={() => navigation.navigate('ProfileScreen')}
             >
-              {userData?.avatar ? (
-                <Image 
-                  source={{ uri: userData.avatar }} 
+              {(userData?.avatar || userData?.profile_image) ? (
+                <Image
+                  source={{ uri: userData.profile_image || userData.avatar }}
                   style={styles.avatar}
                   onError={(e) => console.log("Image load error:", e.nativeEvent.error)}
                 />
@@ -284,7 +278,7 @@ const HomeScreen = ({ navigation }) => {
               )}
             </TouchableOpacity>
             
-            {userData?.is_verified === 1 && (
+            {(userData?.is_verified === 1 || userData?.contact_status === 'active') && (
               <View style={styles.verificationBadge}>
                 <Ionicons name="checkmark-circle" size={16} color="#FF9500" />
               </View>
@@ -293,7 +287,7 @@ const HomeScreen = ({ navigation }) => {
           
 
           <View style={styles.welcomeContainer}>
-            <Text style={styles.title}>Hi, <Text style={styles.titleLight}>{userData?.first_name || 'User'}</Text> 👋</Text>
+            <Text style={styles.title}>Hi, <Text style={styles.titleLight}>{userData?.first_name || userData?.name || 'User'}</Text> 👋</Text>
           </View>
           <TouchableOpacity style={styles.notificationContainer} activeOpacity={0.7}>
             <Ionicons name="notifications-outline" size={24} color="#FF9500" />
@@ -331,7 +325,7 @@ const HomeScreen = ({ navigation }) => {
           >
             {/* Main Wallet Card (WaoCard) */}
             <View style={[styles.walletCard, { width: CARD_WIDTH }]}>
-              <BlurView intensity={20} tint="dark" style={styles.walletCardBlur}>
+              <View style={styles.walletCardBlur}>
                 {/* Header: Logo, Eye */}
                 <View style={styles.walletCardHeader}>
                   <View style={styles.walletCardLogoContainer}>
@@ -347,14 +341,14 @@ const HomeScreen = ({ navigation }) => {
                 {/* Balance Display (Centered) - Using userData.wallet */}
                 <View style={styles.balanceContainer}>
                   <Text style={styles.balanceText}>
-                    {isBalanceVisible ? `₦ ${userData?.wallet || '0.00'}` : '₦ ******'}
+                    {isBalanceVisible ? `₦ ${userData?.wallet || userData?.balance || '0.00'}` : '₦ ******'}
                   </Text>
                 </View>
 
                 {/* Bottom: Wallet ID (Left) and Add Button (Right) */}
                 <View style={styles.walletCardBottomContainer}>
                   <View style={styles.walletCardBottom}>
-                    <Text style={styles.walletIdText}>{userData?.phone_number || ''}</Text>
+                    <Text style={styles.walletIdText}>{userData?.mobile || userData?.phone_number || ''}</Text>
                     <Text style={styles.walletLabel}>Wallet ID</Text>
                   </View>
                   {/* Add Button */}
@@ -362,13 +356,13 @@ const HomeScreen = ({ navigation }) => {
                     <Ionicons name="add-circle" size={28} color="#FF9500" />
                   </TouchableOpacity>
                 </View>
-              </BlurView>
+              </View>
             </View>
             {/* End Main Wallet Card */}
 
             {/* Balance Card */}
             <View style={[styles.balanceCard, { width: CARD_WIDTH }]}>
-              <BlurView intensity={20} tint="dark" style={styles.walletCardBlur}>
+              <View style={styles.walletCardBlur}>
                 {/* Header: Title, Eye */}
                 <View style={styles.balanceCardHeader}>
                   <View style={styles.walletCardLogoContainer}>
@@ -383,7 +377,7 @@ const HomeScreen = ({ navigation }) => {
                 {/* Balance Display (Centered) */}
                 <View style={styles.balanceContainer}>
                   <Text style={styles.balanceText}>
-                    {isBalanceVisible ? `$ ${userData?.balance || '0.00'}` : '$ ******'}
+                    {isBalanceVisible ? `$ ${userData?.balance || userData?.wallet || '0.00'}` : '$ ******'}
                   </Text>
                 </View>
 
@@ -391,7 +385,7 @@ const HomeScreen = ({ navigation }) => {
                 <TouchableOpacity style={[styles.addButton, styles.walletCardBottomAction]} activeOpacity={0.7}>
                   <Ionicons name="add-circle" size={28} color="#FF9500" />
                 </TouchableOpacity>
-              </BlurView>
+              </View>
             </View>
             {/* End Balance Card */}
 
@@ -492,7 +486,6 @@ const HomeScreen = ({ navigation }) => {
             </ScrollView>
           </View>
         </ScrollView>
-      </ImageBackground>
     </SafeAreaView>
   );
 };

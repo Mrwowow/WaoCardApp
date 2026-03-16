@@ -12,7 +12,6 @@ import {
   Image,
   SafeAreaView,
   StatusBar,
-  ImageBackground,
   Modal
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1094,24 +1093,20 @@ const AddCardScreen = ({ navigation, route }) => {
   
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="rgb(255, 248, 240)" />
       
-      <ImageBackground
-        source={require('../../assets/images/gradient-bg.png')}
-        style={styles.backgroundImage}
-      >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity style={styles.backButton} onPress={handlePrevStep}>
             <Ionicons name="chevron-back" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {currentStep === 1 ? (isEditMode ? 'Edit Card' : 'Add New Card') : 
+            {currentStep === 1 ? (isEditMode ? 'Edit Card' : 'Add New Card') :
              `${isEditMode ? 'Edit' : 'New'} ${getCardTypeName(cardType)}`}
           </Text>
           <View style={{ width: 40 }} />
         </View>
-        
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.content}
@@ -1119,7 +1114,6 @@ const AddCardScreen = ({ navigation, route }) => {
         >
           {currentStep === 1 ? renderStepOne() : renderStepTwo()}
         </KeyboardAvoidingView>
-      </ImageBackground>
       
       {/* Camera Scanner Modal */}
       {isCameraVisible && (
@@ -1141,7 +1135,7 @@ const AddCardScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'rgb(255, 248, 240)',
   },
   backgroundImage: {
     flex: 1,
@@ -1158,16 +1152,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
   },
   content: {
     flex: 1,
@@ -1180,12 +1174,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 8,
   },
   stepDescription: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.5)',
     marginBottom: 20,
   },
   cardTypeList: {
@@ -1196,11 +1190,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   cardTypeItemSelected: {
     backgroundColor: 'rgba(255, 149, 0, 0.1)',
@@ -1210,7 +1204,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(255, 149, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -1221,12 +1215,12 @@ const styles = StyleSheet.create({
   cardTypeTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   cardTypeDescription: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(0, 0, 0, 0.5)',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -1238,13 +1232,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   cancelButtonText: {
-    color: '#FFF',
+    color: '#1a1a1a',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -1274,16 +1268,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.6)',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 10,
     padding: 12,
-    color: '#FFF',
+    color: '#1a1a1a',
     fontSize: 16,
   },
   rowContainer: {
@@ -1296,12 +1290,12 @@ const styles = StyleSheet.create({
   },
   cardNumberInput: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 10,
     padding: 12,
-    color: '#FFF',
+    color: '#1a1a1a',
     fontSize: 16,
     marginRight: 10,
   },
@@ -1312,7 +1306,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 149, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 5,
@@ -1327,18 +1321,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   cardNetworkButtonSelected: {
     backgroundColor: 'rgba(255, 149, 0, 0.1)',
     borderColor: 'rgba(255, 149, 0, 0.5)',
   },
   cardNetworkText: {
-    color: '#FFF',
+    color: '#1a1a1a',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -1346,11 +1340,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 100,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
   },
   logoPlaceholder: {
@@ -1358,7 +1352,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoPlaceholderText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.4)',
     marginTop: 8,
     fontSize: 14,
   },
@@ -1457,18 +1451,18 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   colorOptionSelected: {
-    borderColor: '#FFF',
+    borderColor: '#FF9500',
     borderWidth: 3,
   },
   photoSelector: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
     alignSelf: 'center',
   },
@@ -1477,7 +1471,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoPlaceholderText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.4)',
     marginTop: 5,
     fontSize: 12,
   },
@@ -1506,11 +1500,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 80,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
   },
   bannerPlaceholder: {
@@ -1518,7 +1512,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerPlaceholderText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.4)',
     marginTop: 5,
     fontSize: 14,
   },

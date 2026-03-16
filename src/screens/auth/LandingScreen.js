@@ -6,7 +6,6 @@ import {
   Text, 
   TouchableOpacity, 
   Animated, 
-  ImageBackground,
   SafeAreaView,
   FlatList,
   Dimensions
@@ -144,14 +143,8 @@ const LandingScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       
-      {/* Futuristic background */}
-      <ImageBackground 
-        source={require('../../../assets/images/gradient-bg.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
         {/* Animated blob overlay */}
         <View style={styles.blobOverlay}>
           <Svg 
@@ -263,7 +256,6 @@ const LandingScreen = ({ navigation }) => {
             </TouchableOpacity>
           </Animated.View>
         </SafeAreaView>
-      </ImageBackground>
     </View>
   );
 };
@@ -337,10 +329,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: '#FFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   featureIconContainer: {
     width: 70,
@@ -409,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },

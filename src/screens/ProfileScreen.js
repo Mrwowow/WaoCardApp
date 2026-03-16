@@ -7,7 +7,6 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  ImageBackground,
   Animated,
   Switch,
   Platform,
@@ -313,13 +312,8 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="rgb(255, 248, 240)" />
 
-      <ImageBackground
-        source={require('../../assets/images/gradient-bg.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity 
@@ -653,8 +647,7 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.deleteAccountText}>Delete Account</Text>
           </TouchableOpacity>
         </ScrollView>
-      </ImageBackground>
-      
+
       {/* Include the ConfirmationComponent */}
       <ConfirmationComponent />
     </SafeAreaView>

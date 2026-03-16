@@ -365,7 +365,7 @@ const RegisterScreen = ({ navigation }) => {
             <Ionicons 
               name="male" 
               size={22} 
-              color={genderSelection === 'male' ? colors.primary : 'rgba(255,255,255,0.6)'} 
+              color={genderSelection === 'male' ? colors.primary : 'rgba(0,0,0,0.4)'} 
             />
             <Text style={[
               styles.genderText,
@@ -383,7 +383,7 @@ const RegisterScreen = ({ navigation }) => {
             <Ionicons 
               name="female" 
               size={22} 
-              color={genderSelection === 'female' ? colors.primary : 'rgba(255,255,255,0.6)'} 
+              color={genderSelection === 'female' ? colors.primary : 'rgba(0,0,0,0.4)'} 
             />
             <Text style={[
               styles.genderText,
@@ -422,7 +422,7 @@ const RegisterScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       
       {/* Background with blur */}
       <LinearGradient
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xxl,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     marginRight: spacing.s,
   },
   secondaryButtonInner: {

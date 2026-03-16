@@ -11,6 +11,7 @@ export const AuthContext = createContext({
   signOut: () => {},
   signUp: () => {},
   fetchUserData: () => {},
+  updateUserData: () => {},
 });
 
 // Custom hook to use the auth context
@@ -142,104 +143,79 @@ export const AuthProvider = ({ children }) => {
         return { success: true, token: usernameOrToken };
       }
       
-      // Regular authentication with username and password
+      // Regular authentication with username/mobile and password
       try {
-        // Prepare headers with cookies
-        const myHeaders = new Headers();
-        myHeaders.append("Cookie", "_us=1744852028; ad-con=%7B%26quot%3Bdate%26quot%3B%3A%26quot%3B2025-04-16%26quot%3B%2C%26quot%3Bads%26quot%3B%3A%5B%5D%7D; PHPSESSID=l5j0lmbl8ecc5jdll6eh1fdh7r; mode=day");
-        
-        // Prepare form data for authentication
-        const formdata = new FormData();
-        formdata.append("server_key", "105b1bb6bb635934dc758a8831a201ac");
-        formdata.append("username", usernameOrToken);
-        formdata.append("password", passwordOrNull);
-        formdata.append("device_type", "phone");
-        
-        const requestOptions = {
-          method: "POST",
-          headers: myHeaders,
-          body: formdata,
-          redirect: "follow"
-        };
-        
-        // Make the authentication API request
         console.log('AuthContext: Sending authentication request');
-        console.log('AuthContext: Username:', usernameOrToken, 'Password length:', passwordOrNull ? passwordOrNull.length : 0);
-        
-        // Continue with real API call for non-demo users
-        const response = await fetch("https://waocard.co/app/api/auth", requestOptions);
-        
-        // Get response as text first for debugging
-        const responseText = await response.text();
-        console.log('AuthContext: Raw response:', responseText.substring(0, 300) + '...');
-        
-        // Try to parse JSON
-        let result;
-        try {
-          result = JSON.parse(responseText);
-          console.log('AuthContext: Authentication response parsed, status:', 
-            result.api_status === 200 ? 'Success' : 'Failed');
-          
-          // Additional debugging - log entire result structure
-          console.log('AuthContext: Response keys:', Object.keys(result).join(', '));
-        } catch (parseError) {
-          console.error('AuthContext: Error parsing authentication response:', parseError);
-          throw new Error('Invalid JSON response from authentication server');
-        }
-        
-        // Check if authentication was successful
-        if (result.api_status === 200 || (result.api_status && result.api_status.toString() === '200')) {
+        console.log('AuthContext: Mobile:', usernameOrToken, 'Password length:', passwordOrNull ? passwordOrNull.length : 0);
+
+        // Make the authentication API request using new JSON endpoint
+        const response = await fetch("https://www.waobiz.app/api/waocard/auth", {
+          method: "POST",
+          headers: {
+            'accept': '*/*',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: "login",
+            mobile: usernameOrToken,
+            password: passwordOrNull,
+          }),
+        });
+
+        const result = await response.json();
+        console.log('AuthContext: Response keys:', Object.keys(result).join(', '));
+
+        // Check if authentication was successful (new API returns access_token on success)
+        if (result.access_token) {
           const token = result.access_token;
-          const userId = result.user_id;
-          
+          const contact = result.contact || {};
+          const userId = contact.id ? contact.id.toString() : '0';
+
           console.log('AuthContext: Authentication successful, token obtained');
-          
+
           // Store authentication data
           await AsyncStorage.setItem('waocard_token', token);
-          await AsyncStorage.setItem('waocard_user_id', userId.toString());
-          
+          if (result.refresh_token) {
+            await AsyncStorage.setItem('waocard_refresh_token', result.refresh_token);
+          }
+          await AsyncStorage.setItem('waocard_user_id', userId);
+
           // Update token state immediately
           setUserToken(token);
-          
-          // Placeholder user data until full fetch
+
+          // Set initial user data from the contact object in the response
           const initialUserData = {
-            id: userId.toString(),
-            username: usernameOrToken,
-            first_name: '',
-            last_name: '',
-            wallet: '0.00'
+            id: userId,
+            username: contact.mobile || usernameOrToken,
+            first_name: contact.first_name || '',
+            last_name: contact.last_name || '',
+            name: contact.name || '',
+            email: contact.email || '',
+            mobile: contact.mobile || usernameOrToken,
+            wallet: contact.balance || '0.00',
+            contact_status: contact.contact_status || '',
+            business_name: contact.business_name || '',
+            total_rp: contact.total_rp || 0,
           };
-          
+
           // Set initial user data
           setUserData(initialUserData);
-          
-          // Note: Full user data will be fetched separately with fetchUserData
-          
-          return { 
-            success: true, 
-            token: token, 
-            userId: userId
+          await AsyncStorage.setItem('waocard_user_data', JSON.stringify(initialUserData));
+
+          return {
+            success: true,
+            token: token,
+            userId: userId,
+            contact: contact,
           };
         } else {
-          // Authentication failed - handle different error formats
-          console.error('AuthContext: Authentication failed, error details:');
-          
-          // Debug all possible error fields
-          if (result.errors) console.log('- errors:', JSON.stringify(result.errors));
-          if (result.error_id) console.log('- error_id:', result.error_id);
-          if (result.error_text) console.log('- error_text:', result.error_text);
-          
-          // Extract error message from wherever it might be in the response
-          const errorMessage = 
-            (result.errors && result.errors.error_text) ||  // Object with error_text
-            result.error_text ||                           // Direct error_text
-            (typeof result.errors === 'string' && result.errors) || // String errors
-            'Authentication failed';                        // Fallback
-          
-          return { 
-            success: false, 
-            error: errorMessage,
-            rawError: result  // Return raw error for debugging
+          // Authentication failed
+          console.error('AuthContext: Authentication failed:', result.message || 'Unknown error');
+
+          return {
+            success: false,
+            error: result.message || 'Authentication failed',
+            rawError: result
           };
         }
       } catch (error) {
@@ -317,253 +293,107 @@ export const AuthProvider = ({ children }) => {
       }
     },
     
-    // Fetch user data using the provided API endpoint
+    // Update user data in state and storage
+    updateUserData: async (newData) => {
+      try {
+        const merged = { ...userData, ...newData };
+        setUserData(merged);
+        await AsyncStorage.setItem('waocard_user_data', JSON.stringify(merged));
+        console.log('AuthContext: User data updated');
+        return merged;
+      } catch (error) {
+        console.error('AuthContext: Error updating user data:', error);
+        throw error;
+      }
+    },
+
+    // Fetch user data - uses stored data from login response since the new API
+    // returns contact data directly in the login response
     fetchUserData: async (token, phoneOrUsername) => {
       try {
         console.log('AuthContext: Fetching user data for:', phoneOrUsername);
-        
-        // Check for existing user data first to avoid unnecessary API calls
+
+        // Check for existing user data in storage (populated during login)
         try {
           const existingData = await AsyncStorage.getItem('waocard_user_data');
           if (existingData) {
-            const userData = JSON.parse(existingData);
-            if (userData && userData.username === phoneOrUsername) {
+            const storedUserData = JSON.parse(existingData);
+            if (storedUserData && (storedUserData.mobile === phoneOrUsername || storedUserData.username === phoneOrUsername)) {
               console.log('AuthContext: Using existing user data from storage');
-              setUserData(userData);
-              return userData;
+              setUserData(storedUserData);
+              return storedUserData;
             }
           }
         } catch (storageError) {
           console.log('AuthContext: Error checking existing user data:', storageError);
         }
-        
+
         // Check if this is our demo user
         if (phoneOrUsername === 'demo' || (token && token.startsWith && token.startsWith('mock-token-'))) {
           console.log('AuthContext: Using mock data for demo user');
-          
-          // Create complete mock user data
+
           const mockUserData = {
             id: '1',
             username: 'demo',
             first_name: 'Demo',
             last_name: 'User',
+            name: 'Demo User',
+            mobile: '1234567890',
             wallet: '1000.00',
-            phone_number: '1234567890',
+            balance: '1000.00',
             email: 'demo@example.com',
-            avatar: 'https://waocard.co/app/upload/photos/d-avatar.jpg',
-            cover: 'https://waocard.co/app/upload/photos/d-cover.jpg',
-            is_verified: 1,
-            admin: "1",
-            gender: 'male',
-            gender_text: 'Male',
-            address: '123 Demo Street, Demo City',
-            details: {
-              post_count: 5,
-              album_count: 2,
-              following_count: 10,
-              followers_count: 20,
-              groups_count: 3,
-              likes_count: 50
-            },
-            social: {
-              facebook: 'demo.user',
-              twitter: 'demouser',
-              instagram: 'demouser',
-              linkedin: '',
-              youtube: ''
-            },
-            points: '100',
-            is_pro: true,
-            pro_type: '1',
-            lastseen_time_text: 'Just now',
-            url: 'https://waocard.co/app/demo'
+            contact_status: 'active',
+            business_name: 'WaoCard Demo',
+            total_rp: 100,
           };
-          
-          // Store updated user data in AsyncStorage
+
           await AsyncStorage.setItem('waocard_user_data', JSON.stringify(mockUserData));
-          
-          // Update state with the new user data
           setUserData(mockUserData);
-          
           return mockUserData;
         }
-        
-        // For real users, continue with API call
-        // Create headers
-        const myHeaders = new Headers();
-        myHeaders.append("Cookie", "_us=1744852028; ad-con=%7B%26quot%3Bdate%26quot%3B%3A%26quot%3B2025-04-16%26quot%3B%2C%26quot%3Bads%26quot%3B%3A%5B%5D%7D; PHPSESSID=l5j0lmbl8ecc5jdll6eh1fdh7r; mode=day");
-        
-        // Prepare form data for the API request
-        const formdata = new FormData();
-        formdata.append("server_key", "105b1bb6bb635934dc758a8831a201ac");
-        formdata.append("fetch", "user_data");
-        formdata.append("send_notify", "1");
-        
-        // Determine if input is a phone number or username
-        const isPhone = phoneOrUsername && 
-                       (phoneOrUsername.startsWith('+') || 
-                        /^\d{10,15}$/.test(phoneOrUsername));
-        
-        let apiUrl = '';
-        
-        // Add appropriate parameter and select endpoint based on input type
-        if (isPhone) {
-          console.log('AuthContext: Using phone number for fetch');
-          formdata.append("phone", phoneOrUsername);
-          apiUrl = `https://waocard.co/app/api/get-user-data-phone?access_token=${token}`;
-        } else {
-          console.log('AuthContext: Using username for fetch');
-          formdata.append("username", phoneOrUsername);
-          apiUrl = `https://waocard.co/app/api/get-user-data-username?access_token=${token}`;
+
+        // For real users, re-authenticate to get fresh contact data
+        console.log('AuthContext: No stored data found, re-fetching via login endpoint');
+
+        // If we have userData in state, return it
+        if (userData) {
+          console.log('AuthContext: Returning current user data from state');
+          return userData;
         }
-        
-        // Set up request options with headers
-        const requestOptions = {
-          method: "POST",
-          headers: myHeaders,
-          body: formdata,
-          redirect: "follow"
+
+        // Minimal fallback
+        const fallbackUserData = {
+          id: '0',
+          username: phoneOrUsername || 'user',
+          first_name: '',
+          last_name: '',
+          name: '',
+          mobile: phoneOrUsername || '',
+          wallet: '0.00',
+          balance: '0.00',
         };
-        
-        console.log('AuthContext: Sending request to:', apiUrl);
-        
-        // Make the API request
-        const response = await fetch(apiUrl, requestOptions);
-        
-        // Get response as text first so we can log it if there's a parsing error
-        const responseText = await response.text();
-        
-        // Try to parse the JSON response
-        let result;
-        try {
-          result = JSON.parse(responseText);
-          console.log('AuthContext: API response received:', 
-            result.api_status === 200 ? 'Success' : 'Failed');
-            
-          // Log response structure for debugging
-          console.log('AuthContext: Response structure:', 
-            Object.keys(result).join(', '));
-        } catch (parseError) {
-          console.error('AuthContext: Error parsing JSON response:', parseError);
-          console.log('AuthContext: Raw response:', responseText.substring(0, 500) + '...');
-          throw new Error('Invalid JSON response from server');
-        }
-        
-        // Check if the API request was successful
-        if (result.api_status === 200 && result.user_data) {
-          const fetchedUserData = result.user_data;
-          
-          // Process and normalize user data from the API based on the sample response
-          const processedUserData = {
-            id: fetchedUserData.user_id,
-            username: fetchedUserData.username,
-            first_name: fetchedUserData.first_name || '',
-            last_name: fetchedUserData.last_name || '',
-            wallet: fetchedUserData.wallet || '0.00',
-            phone_number: fetchedUserData.phone_number,
-            email: fetchedUserData.email,
-            avatar: fetchedUserData.avatar,
-            cover: fetchedUserData.cover,
-            is_verified: fetchedUserData.verified === "1" || fetchedUserData.is_verified === 1,
-            admin: fetchedUserData.admin === "1" ? "1" : "0",
-            gender: fetchedUserData.gender || 'other',
-            birthday: fetchedUserData.birthday,
-            address: fetchedUserData.address || '',
-            country_id: fetchedUserData.country_id,
-            city: fetchedUserData.city || '',
-            state: fetchedUserData.state || '',
-            zip: fetchedUserData.zip || '',
-            lat: fetchedUserData.lat,
-            lng: fetchedUserData.lng,
-            active: fetchedUserData.active === "1",
-            balance: fetchedUserData.balance || "0",
-            website: fetchedUserData.website || '',
-            social: {
-              facebook: fetchedUserData.facebook || '',
-              twitter: fetchedUserData.twitter || '',
-              instagram: fetchedUserData.instagram || '',
-              linkedin: fetchedUserData.linkedin || '',
-              youtube: fetchedUserData.youtube || ''
-            },
-            details: fetchedUserData.details ? {
-              post_count: parseInt(fetchedUserData.details.post_count || '0'),
-              album_count: parseInt(fetchedUserData.details.album_count || '0'),
-              following_count: parseInt(fetchedUserData.details.following_count || '0'),
-              followers_count: parseInt(fetchedUserData.details.followers_count || '0'),
-              groups_count: parseInt(fetchedUserData.details.groups_count || '0'),
-              likes_count: parseInt(fetchedUserData.details.likes_count || '0')
-            } : {
-              post_count: 0,
-              album_count: 0,
-              following_count: 0,
-              followers_count: 0,
-              groups_count: 0,
-              likes_count: 0
-            },
-            // Additional fields from the sample
-            points: fetchedUserData.points || '0',
-            is_pro: fetchedUserData.is_pro === '1',
-            pro_type: fetchedUserData.pro_type || '',
-            gender_text: fetchedUserData.gender_text || (fetchedUserData.gender === 'male' ? 'Male' : fetchedUserData.gender === 'female' ? 'Female' : 'Other'),
-            lastseen_time_text: fetchedUserData.lastseen_time_text || '',
-            url: fetchedUserData.url || ''
-          };
-          
-          console.log('AuthContext: User data processed successfully');
-          
-          // Store updated user data in AsyncStorage
-          await AsyncStorage.setItem('waocard_user_data', JSON.stringify(processedUserData));
-          
-          // Update state with the new user data
-          setUserData(processedUserData);
-          
-          return processedUserData;
-        } else {
-          // Handle API error
-          console.error('AuthContext: API returned error:', result.errors || 'Unknown error');
-          
-          // If we have existing user data, return it as fallback
-          if (userData) {
-            console.log('AuthContext: Using existing user data as fallback');
-            return userData;
-          }
-          
-          // Create minimal fallback data
-          const fallbackUserData = {
-            id: '0',
-            username: phoneOrUsername || 'user',
-            first_name: 'Anonymous',
-            last_name: 'User',
-            wallet: '0.00',
-            phone_number: isPhone ? phoneOrUsername : '',
-          };
-          
-          // Store and return fallback data
-          setUserData(fallbackUserData);
-          await AsyncStorage.setItem('waocard_user_data', JSON.stringify(fallbackUserData));
-          
-          return fallbackUserData;
-        }
+
+        setUserData(fallbackUserData);
+        await AsyncStorage.setItem('waocard_user_data', JSON.stringify(fallbackUserData));
+        return fallbackUserData;
       } catch (error) {
         console.error('AuthContext: Fetch user data error:', error);
-        
-        // Return existing data if available
+
         if (userData) {
           return userData;
         }
-        
-        // Create minimal error fallback
+
         const errorFallbackData = {
           id: '0',
           username: phoneOrUsername || 'user',
-          first_name: 'Unknown',
-          last_name: 'User',
+          first_name: '',
+          last_name: '',
+          mobile: phoneOrUsername || '',
           wallet: '0.00',
         };
-        
+
         setUserData(errorFallbackData);
         await AsyncStorage.setItem('waocard_user_data', JSON.stringify(errorFallbackData));
-        
         return errorFallbackData;
       }
     }

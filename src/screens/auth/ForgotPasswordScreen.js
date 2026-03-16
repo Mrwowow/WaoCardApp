@@ -126,7 +126,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
   
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       
       {/* Background gradient */}
       <LinearGradient

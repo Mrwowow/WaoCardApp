@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   activeTabText: {
-    color: colors.white,
+    color: '#FFF',
     fontFamily: fonts.semiBold,
   },
   sectionTitle: {
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
 });
 

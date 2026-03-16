@@ -340,10 +340,10 @@ const DataPurchaseScreen = ({ navigation }) => {
               style={styles.purchaseButtonGradient}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color={colors.white} />
+                <ActivityIndicator size="small" color="#FFF" />
               ) : (
                 <>
-                  <Ionicons name="cart-outline" size={20} color={colors.white} />
+                  <Ionicons name="cart-outline" size={20} color="#FFF" />
                   <Text style={styles.purchaseButtonText}>Purchase Data</Text>
                 </>
               )}
@@ -541,7 +541,7 @@ const styles = {
     paddingHorizontal: spacing.l,
   },
   purchaseButtonText: {
-    color: colors.white,
+    color: '#FFF',
     fontSize: fonts.sizes.medium,
     fontWeight: '600',
     marginLeft: spacing.s,

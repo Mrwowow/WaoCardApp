@@ -9,22 +9,22 @@ export const colors = {
   primaryLight: '#FFB649',
   primaryTransparent: 'rgba(255, 149, 0, 0.2)',
   primaryBorder: 'rgba(255, 149, 0, 0.3)',
-  background: '#000000',
-  backgroundLight: '#111111',
-  white: '#FFFFFF',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255, 255, 255, 0.7)',
-  textTertiary: 'rgba(255, 255, 255, 0.5)',
-  inputBackground: 'rgba(255, 255, 255, 0.06)',
-  inputBorder: 'rgba(255, 255, 255, 0.1)',
-  cardBackground: 'rgba(255, 255, 255, 0.05)',
-  cardBorder: 'rgba(255, 255, 255, 0.1)',
+  background: 'rgb(255, 248, 240)',
+  backgroundLight: 'rgb(255, 252, 248)',
+  white: '#1a1a1a',
+  textPrimary: '#1a1a1a',
+  textSecondary: 'rgba(0, 0, 0, 0.6)',
+  textTertiary: 'rgba(0, 0, 0, 0.4)',
+  inputBackground: 'rgba(0, 0, 0, 0.04)',
+  inputBorder: 'rgba(0, 0, 0, 0.1)',
+  cardBackground: '#FFFFFF',
+  cardBorder: 'rgba(0, 0, 0, 0.08)',
   error: '#FF3B30',
   success: '#30D158',
   warning: '#FFD60A',
   infoBlue: '#0A84FF',
   black: '#000000',
-  border: 'rgba(255, 255, 255, 0.1)'
+  border: 'rgba(0, 0, 0, 0.1)'
 };
 
 export const fonts = {
